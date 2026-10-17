@@ -1,0 +1,2 @@
+Pon aquí los PNG de monstruos (fondo transparente, el monstruo mirando a la DERECHA).
+Después añade una línea en js/data/monsters/monstruos.js. No hace falta redimensionar: el juego los ajusta al mismo tamaño que los personajes.

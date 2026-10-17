@@ -1,0 +1,50 @@
+Pon aquí el PNG de cada invocación y objeto del mapa: fondo transparente, mirando a la DERECHA. Nombre = <id>.png
+No hace falta redimensionar: el juego los ajusta (invocaciones ~75% de la altura de un personaje; objetos ~34 px). Mientras falte un PNG se ve el icono.
+
+== INVOCACIONES (se mueven y atacan solas, salvo las fijas) ==
+tofu.png   🐦 Tofu
+jalato.png   🐗 Jalató
+prespic.png   👁️ Prespic
+dragonito.png   🐲 Dragonito Rojo
+brizlon.png   🐃 Brizlón
+mochila.png   🎒 Mochila Animada  (fija)
+cofre.png   📦 Cofre Animado  (fija)
+pala.png   ⛏️ Pala Animada  (fija)
+doble.png   👤 Doble
+gatito.png   🐱 Gatito
+bloqueadora.png   🪆 La Bloqueadora
+loca.png   🌀 La Loca
+sacrificada.png   💣 La Sacrificada
+hinchada.png   🎈 La Hinchada
+superpoderosa.png   🧌 La Superpoderosa
+arbol.png   🌳 Árbol  (fija)
+espada.png   🗡️ Espada Voladora
+vasija.png   🏺 Vasija  (fija)
+baliza.png   🚩 Baliza Táctica  (fija)
+esfera.png   🔮 Esfera de Xelor  (fija)
+conejita.png   🐰 Conejita
+tymobot.png   🤖 Tymobot
+mascara.png   🎭 Máscara Invocada  (fija)
+harponera.png   ⚓ Harponera  (fija)
+guardiana.png   💙 Guardiana  (fija)
+tactica.png   🌬️ Táctica  (fija)
+
+== TRAMPAS (invisibles para el rival) ==
+trampa_solapada.png   🔥 Trampa Solapada
+trampa_masa.png   🪨 Trampa de Masa
+trampa_envenenada.png   ☠️ Trampa Envenenada
+trampa_repulsiva.png   💨 Trampa Repulsiva
+trampa_inmovilizadora.png   🕸️ Trampa Inmovilizadora
+trampa_mortal.png   💀 Trampa Mortal
+
+== GLIFOS (zona de varias casillas: el PNG es el centro; el color de las casillas lo pone el juego) ==
+glifo_flamigero.png   🔥 Glifo Flamígero
+glifo_agresivo.png   🌪️ Glifo Agresivo
+glifo_optico.png   👁️ Glifo Óptico
+glifo_repulsion.png   💢 Glifo de Repulsión
+glifo_gravitacional.png   🌀 Glifo Gravitacional
+
+== BOMBAS ==
+bomba_incandescente.png   🧨 Bomba Incandescente
+bomba_explosiva.png   🌩️ Bomba Explosiva
+bomba_hidrica.png   💧 Bomba Hídrica

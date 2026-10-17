@@ -1,0 +1,3 @@
+Para añadir un monstruo NO copies este archivo: basta una línea en js/data/monsters/monstruos.js
+   {id:'goblin', n:'Goblin', hp:90, png:'goblin.png', spells:['mordisco']},
+y el PNG en assets/monsters/goblin.png

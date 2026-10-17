@@ -1,0 +1,3 @@
+Obstáculos con tu propio dibujo (opcional)
+Guarda aquí PNG con fondo transparente: roca.png, caja.png, arbol.png, pilar.png, muro.png, valla.png
+y pon  png:true  en la línea OBST(...) correspondiente de js/game/maps.js. Si no hay PNG se dibuja el obstáculo con los colores del tema de la arena.

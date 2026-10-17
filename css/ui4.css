@@ -1,0 +1,55 @@
+/* ui4.css · interfaz personalizable (js/ui/layout.js) + resistencias */
+#layb{background:linear-gradient(#4a4843,#33322e);border:2px solid #111}body.lay-edit #layb{border-color:var(--g1,#9bd54a);color:var(--g1,#9bd54a)}
+/* paneles con posición propia */
+.lay-off{visibility:hidden!important;pointer-events:none!important}body.lay-edit .lay-off{visibility:visible!important;opacity:.35}
+.lay-on.lay-scale:not(#pty){width:max-content!important}
+#chat.lay-sized:not(.col) #chl{flex:1 1 0;height:auto!important;min-height:0}
+#chat.lay-on #chl{font-size:calc(12px*var(--k,1))}#chat.lay-on #chf input{font-size:calc(13px*var(--k,1))}
+#chat.lay-on.col{height:auto!important}
+/* capa de edición */
+#layov{position:absolute;inset:0;z-index:8;pointer-events:none;display:none;overflow:hidden}body.lay-edit #layov{display:block}
+.lov{position:absolute;box-sizing:border-box;border:2px dashed #9bd54a;border-radius:10px;background:rgba(155,213,74,.12);pointer-events:auto;cursor:move;touch-action:none;user-select:none}
+.lov.mv{background:rgba(155,213,74,.25);border-style:solid}.lov.off{border-color:#9a968c;background:rgba(0,0,0,.4)}
+.lov .lt{position:absolute;left:0;top:0;padding:1px 7px;font:700 11px/1.5 sans-serif;color:#10200a;background:#9bd54a;border-radius:8px 0 8px 0;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.lov.off .lt{background:#9a968c;color:#111}
+.lov .lx{position:absolute;right:3px;top:3px;width:24px;height:24px;padding:0;font-size:13px;line-height:1;border-radius:6px;background:#25241f;border:1px solid #111;color:#fff;cursor:pointer}
+.lov .lrz{position:absolute;right:-2px;bottom:-2px;width:26px;height:26px;cursor:nwse-resize;touch-action:none;background:linear-gradient(135deg,transparent 50%,#9bd54a 50%);border-radius:0 0 8px 0}
+.lov.off .lrz{background:linear-gradient(135deg,transparent 50%,#9a968c 50%)}
+/* barra de edición */
+#laybar{position:fixed;left:50%;top:56px;transform:translateX(-50%);z-index:9;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;max-width:min(600px,calc(100vw - 16px));padding:6px 10px;background:rgba(43,42,39,.97);border:2px solid #111;box-shadow:0 0 0 1px var(--ln,#4a4843),0 6px 18px #000a;border-radius:12px;font-size:12px;color:#d8d2c0}
+#laybar[hidden]{display:none}#laybar b{color:var(--g1,#9bd54a);font-size:13px;cursor:move;touch-action:none;user-select:none}#laybar .lh{opacity:.8}
+#laybar .lc{display:flex;gap:4px;flex-wrap:wrap}#laybar button{padding:4px 9px;font-size:12px;border-radius:8px}#laybar .lc button.on{border-color:var(--g2,#6dbb3c)}#laybar .lc button:not(.on){opacity:.6}
+#laybar button.ok{background:linear-gradient(var(--g1,#9bd54a),var(--g2,#6dbb3c));color:var(--gt,#10200a);font-weight:800}
+@media(max-width:700px){#laybar .lh{display:none}#laybar{top:50px}}
+/* resistencias en la tarjeta del personaje */
+#tcard .tc.rr{margin-top:2px}#tcard .tc.rr em{font-size:11px;padding:0 5px;color:#cfeaa0}#tcard .tc.rr em.neg{color:#ff8b80}
+
+/* ===== v16: salir del combate · ingredientes con enlace al mercadillo · Coliseo (búsqueda 1v1/2v2/3v3) ===== */
+#leave{border-color:#a8433b;background:#3a1816;color:#ffd0ca;font-weight:800;white-space:nowrap}#leave:hover{background:#5a221e}#leave[hidden]{display:none}
+@media(max-width:700px){#leave{padding:6px 8px;font-size:12px}}
+#leavebox,#mfound{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:12px}#leavebox[hidden],#mfound[hidden]{display:none}
+.lv{width:min(420px,100%);background:#2b2a27;border:3px solid #111;border-radius:12px;box-shadow:0 0 0 2px #4a4843,0 12px 40px #000;padding:16px 18px;color:#e6e0d0}
+.lv h3{margin:0 0 8px;color:#ffb070}.lv p{margin:0 0 14px;line-height:1.45;font-size:14px}.lvr{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.lvr button{padding:8px 14px;font-weight:800}.lvr button.bad{background:#7a2a24;border-color:#b0443b;color:#fff}.lvr button.bad:hover{background:#963830}
+/* ingredientes de las recetas = enlace al mercadillo */
+.jw-ing.jw-go{cursor:pointer}.jw-ing.jw-go:hover,.jw-ing.jw-go:focus{border-color:var(--g1);outline:none;background:#23221f}
+.jw-ing.no .jw-buy{background:#3a2f12;border:1px solid #a8742f;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:800;color:#ffd24a;white-space:nowrap}
+.mk-back{padding:4px 10px;font-size:12px;font-weight:800;border-radius:8px;background:#1e3a14;border:2px solid #6dbb3c;color:#cdea8f;margin-left:auto;margin-right:8px}
+/* Coliseo */
+#colo{position:fixed;inset:0;z-index:12;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:10px;touch-action:auto}#colo[hidden]{display:none}
+#colo .st-win.cq{width:min(560px,100%);height:auto;max-height:100%;overflow:auto}#colo.max .st-win.cq{width:100%!important;height:100%!important;max-width:none!important}#colo.max{padding:0}
+.cq-box{padding:14px 16px 16px;color:#e6e0d0;text-align:center}.cq-box h3{margin:6px 0 10px;color:var(--g1)}.cq-me{font-size:13px;opacity:.9}
+.cq-fs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.cq-f{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 6px;border-radius:10px;background:#1b1a18;border:2px solid #4a4843;color:#e6e0d0}.cq-f b{font-size:18px}.cq-f small{font-size:11px;opacity:.75}.cq-f em{font-style:normal;font-size:11px;color:#ffd24a}
+.cq-f.on{border-color:var(--g1);background:#22301a}
+.cq-p{font-size:12.5px;line-height:1.5;opacity:.9;margin:8px 0}.cq-msg{background:#3a2f12;border:1px solid #a8742f;border-radius:8px;padding:6px 10px;font-size:12.5px;color:#ffd7a0;margin:8px 0}
+.cq-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}.cq-row button{padding:9px 16px;font-weight:800}.cq-row button.ok{background:linear-gradient(var(--g1),var(--g2));color:var(--gt);border-color:var(--g3)}.cq-row button.bad{background:#7a2a24;border-color:#b0443b;color:#fff}
+.cq-spin{font-size:38px;animation:cqs 1.6s linear infinite;display:inline-block}@keyframes cqs{to{transform:rotate(360deg)}}
+.cq-big b{font-size:34px;color:#ffd24a}.cq-big small{display:block;font-size:12px;opacity:.8}
+.cq-pips{display:flex;gap:6px;justify-content:center;margin:10px 0}.cq-pips i{width:22px;height:22px;border-radius:50%;border:2px solid #4a4843;background:#1b1a18}.cq-pips i.on.a{background:#4fa3ff;border-color:#9bd0ff}.cq-pips i.on.b{background:#ff6a5a;border-color:#ffb0a8}
+#qchip{position:fixed;top:56px;left:50%;transform:translateX(-50%);z-index:11;display:flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;background:#22301a;border:2px solid var(--g1);border-radius:999px;color:#e6f5c8;font-size:12.5px;box-shadow:0 4px 16px #000a}#qchip[hidden]{display:none}
+#qchip .qp{animation:cqs 1.6s linear infinite;display:inline-block}#qchip button{padding:3px 10px;font-size:12px;border-radius:999px}#qchip button.x{background:#7a2a24;border-color:#b0443b;color:#fff}
+@media(max-width:700px){#qchip{top:50px;max-width:calc(100% - 12px);flex-wrap:wrap;justify-content:center;border-radius:14px}.cq-fs{grid-template-columns:1fr}}
+.mf{width:min(520px,100%);background:#2b2a27;border:3px solid var(--g1);border-radius:14px;padding:16px;text-align:center;color:#e6e0d0;box-shadow:0 0 40px #9bd54a55}.mf h2{margin:0;color:var(--g1)}.mf-t{color:#ffd24a;font-weight:800;margin:4px 0 10px}
+.mf-cols{display:flex;gap:10px;align-items:center;justify-content:center}.mf-cols>div{flex:1}.mf h4{margin:0 0 4px;font-size:12px;opacity:.8}.mf ul{list-style:none;margin:0;padding:0;font-size:13px}.mf li{padding:3px 0}.mf li.me{color:#ffd84a;font-weight:800}.mf li small{opacity:.7}
+.mf-vs{flex:0 0 auto!important;font-size:22px;font-weight:900;color:#ff8b6a}.mf-n{margin-top:12px;font-size:15px}.mf-n b{font-size:24px;color:#ffd24a}

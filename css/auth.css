@@ -1,0 +1,69 @@
+/* auth.css · pantalla de login. Paleta del juego: verdes #9bd54a / #6dbb3c, fondo #10200a / #22301a, paneles #1b1a18 / #2b2a27, texto #e6e0d0, dorado #ffd24a */
+#acct{margin-left:auto;display:flex;align-items:center;gap:8px;background:#22301a;border:2px solid #6dbb3c;color:#cdea8f;font-weight:700;font-size:13px;padding:5px 10px;border-radius:8px}
+#acct[hidden]{display:none}#acct i{font-style:normal;color:#9bd54a;font-size:12px;opacity:.85}#acct:hover{border-color:#9bd54a;background:#2c3f20}
+
+#auth{--g1:#9bd54a;--g2:#6dbb3c;--gt:#10200a;--gold:#ffd24a;--ink:#e6e0d0;--mut:#a7a392;--line:#4a4843;
+ position:fixed;inset:0;z-index:10000;color:var(--ink);font-family:"Trebuchet MS",system-ui,sans-serif;user-select:text;touch-action:auto;
+ background:linear-gradient(180deg,rgba(10,24,6,.80),rgba(8,18,5,.94)),#10200a url(../assets/arenas/pradera.jpg) center/cover no-repeat}
+#auth[hidden]{display:none}
+#auth .au-glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(60% 50% at 25% 30%,rgba(155,213,74,.20),transparent 70%),radial-gradient(45% 40% at 85% 85%,rgba(255,210,74,.10),transparent 70%)}
+#auth .au-scroll{position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;align-items:center;padding:max(18px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom))}
+#auth .au-wrap{width:min(1020px,100%);margin:auto 0;display:grid;grid-template-columns:1.1fr minmax(320px,430px);gap:34px;align-items:center}
+#auth *{box-sizing:border-box}
+
+/* --- presentación del juego --- */
+.au-logo{display:flex;align-items:center;gap:12px}.au-logo span{font-size:46px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.6))}
+.au-logo h1{margin:0;font-size:clamp(40px,6vw,64px);letter-spacing:2px;line-height:1;text-transform:uppercase;
+ background:linear-gradient(#fff3b0,var(--gold) 55%,#d99a1e);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 3px 0 #5b3a05) drop-shadow(0 6px 14px rgba(0,0,0,.6))}
+.au-tag{margin:14px 0 8px;font-size:clamp(17px,2.3vw,21px);font-weight:700;color:var(--g1);line-height:1.3;text-shadow:0 2px 8px rgba(0,0,0,.7)}
+.au-desc{margin:0 0 14px;font-size:15px;line-height:1.55;color:#d6d1bf;max-width:560px;text-shadow:0 1px 6px rgba(0,0,0,.8)}
+.au-chips{list-style:none;margin:0 0 6px;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.au-chips li{background:rgba(34,48,26,.88);border:1.5px solid #3f5a2a;color:#cdea8f;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700}
+.au-cast{display:flex;align-items:flex-end;margin-top:10px;height:150px}
+.au-cast img{height:150px;width:auto;max-width:25%;object-fit:contain;margin-right:-26px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.65));transition:transform .25s}
+.au-cast img:nth-child(odd){height:132px}.au-cast img:hover{transform:translateY(-6px)}
+
+/* --- tarjeta --- */
+.au-card{background:linear-gradient(180deg,rgba(43,42,39,.96),rgba(27,26,24,.97));border:2px solid var(--line);border-radius:18px;padding:22px 22px 18px;min-height:360px;
+ box-shadow:0 0 0 1px #000,0 18px 50px rgba(0,0,0,.65),0 0 46px rgba(155,213,74,.16);position:relative}
+.au-card::before{content:"";position:absolute;left:18px;right:18px;top:-2px;height:3px;border-radius:3px;background:linear-gradient(90deg,transparent,var(--g1),transparent)}
+.au-view{display:none;animation:auIn .25s ease}.au-view.on{display:block}@keyframes auIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+#au-load.on{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:300px;text-align:center}
+#au-load p{margin:0;color:#d6d1bf;line-height:1.5}#au-load.err p{color:#ff9a90}
+.au-spin{width:42px;height:42px;border-radius:50%;border:4px solid #33442a;border-top-color:var(--g1);animation:auSp .8s linear infinite}#au-load.err .au-spin{display:none}@keyframes auSp{to{transform:rotate(360deg)}}
+.au-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+
+.au-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#131211;border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:16px}
+.au-tabs button{background:transparent;border:0;border-radius:9px;padding:10px 6px;color:var(--mut);font-weight:800;font-size:15px;cursor:pointer;transition:.15s}
+.au-tabs button.on{background:linear-gradient(var(--g1),var(--g2));color:var(--gt);box-shadow:0 2px 8px rgba(0,0,0,.45)}.au-tabs button:not(.on):hover{color:var(--ink)}
+#auth h2{margin:0 0 6px;color:var(--g1);font-size:22px}.au-sub{margin:0 0 14px;color:#cfcab8;font-size:14px;line-height:1.5}
+#auth label{display:block;margin:12px 0 5px;font-size:13px;font-weight:700;color:#cfcab8}
+#auth input{width:100%;background:#131211;border:2px solid var(--line);border-radius:10px;padding:12px 13px;font-size:16px;color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s;user-select:text}
+#auth input::placeholder{color:#6f6c61}#auth input:focus{border-color:var(--g1);box-shadow:0 0 0 3px rgba(155,213,74,.2)}
+.au-pw{position:relative}.au-pw input{padding-right:48px}.au-pw button{position:absolute;right:4px;top:4px;bottom:4px;width:40px;border:0;background:transparent;color:var(--mut);font-size:18px;cursor:pointer;border-radius:8px}.au-pw button:hover{color:var(--g1)}
+.au-meter{height:6px;background:#131211;border-radius:4px;margin-top:8px;overflow:hidden;border:1px solid #2b2a27}.au-meter i{display:block;height:100%;width:0;background:#d23b34;transition:width .2s,background .2s}
+.au-meter i[data-s="2"]{background:#e0a030}.au-meter i[data-s="3"]{background:var(--g2)}.au-meter i[data-s="4"]{background:var(--g1)}.au-hint{display:block;margin-top:5px;color:var(--mut);font-size:12px}
+
+.au-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px;padding:13px 14px;font:800 16px "Trebuchet MS",system-ui,sans-serif;border-radius:11px;cursor:pointer;border:2px solid #000;
+ background:linear-gradient(var(--g1),var(--g2));color:var(--gt);box-shadow:0 3px 0 #3d6b1d,0 6px 14px rgba(0,0,0,.45);transition:transform .08s,filter .15s}
+.au-btn:hover:not(:disabled){filter:brightness(1.08)}.au-btn:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #3d6b1d}
+.au-btn:disabled{opacity:.5;cursor:not-allowed}.au-btn.sm{width:auto;margin:0;padding:9px 16px;font-size:14px}
+.au-btn.au-g{background:#f4f1e6;color:#2b2a27;box-shadow:0 3px 0 #a9a590,0 6px 14px rgba(0,0,0,.4);margin-top:0}
+.au-link{display:block;margin:12px auto 0;background:none;border:0;color:var(--g1);font:700 14px "Trebuchet MS",system-ui,sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:4px 8px}.au-link:hover{color:#cdea8f}
+.au-dev{color:var(--mut);font-weight:400;font-size:13px}.au-link[hidden],.au-dev[hidden]{display:none}
+.au-or{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--mut);font-size:13px}.au-or::before,.au-or::after{content:"";flex:1;height:1px;background:var(--line)}
+.au-msg{min-height:20px;margin:12px 0 0;font-size:14px;line-height:1.45;color:#ff9a90;text-align:center}.au-msg.ok{color:var(--g1)}.au-msg:empty{display:none}
+#au-form.busy{opacity:.7;pointer-events:none}
+
+.au-foot{width:min(1020px,100%);text-align:center;color:#8d8a7c;font-size:12px;padding:16px 0 4px;text-shadow:0 1px 4px #000}
+#au-toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:10001;max-width:min(480px,92vw);background:#22301a;border:2px solid var(--g2,#6dbb3c);color:#e6f6c6;padding:11px 16px;border-radius:12px;font:700 14px/1.4 "Trebuchet MS",system-ui,sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.6);text-align:center}#au-toast[hidden]{display:none}
+
+/* --- móvil / pantallas pequeñas --- */
+@media(max-width:860px){
+ #auth .au-wrap{grid-template-columns:1fr;gap:18px;margin:0 auto}
+ .au-hero{text-align:center}.au-logo{justify-content:center}.au-desc{margin-left:auto;margin-right:auto}.au-chips{justify-content:center}
+ .au-cast{display:none}.au-card{min-height:0;padding:18px 16px 14px}
+}
+@media(max-width:520px){.au-desc{display:none}.au-logo span{font-size:34px}.au-chips li{font-size:12px;padding:5px 9px}.au-tag{margin:10px 0}}
+@media(max-height:640px) and (min-width:861px){.au-cast{display:none}}
+@media(prefers-reduced-motion:reduce){#auth *,#auth *::before{animation:none!important;transition:none!important}}

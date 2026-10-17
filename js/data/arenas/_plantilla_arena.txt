@@ -1,0 +1,45 @@
+PLANTILLA DE ARENA (cada mapa es un dibujo en texto: una letra = una celda)
+==========================================================================
+1) Copia este bloque como  js/data/arenas/mi_mapa.js
+2) Añade  <script src="js/data/arenas/mi_mapa.js"></script>  en index.html (zona ARENAS)
+3) Listo: la arena sale SOLA al azar entre todas las que existan (no hay selector de arena ni de clima).
+
+Letras del dibujo:
+   ·  (o espacio)   vacío: no hay baldosa (no se pisa)        .   suelo normal
+   1                suelo + salida del equipo 1 (tú)           2   suelo + salida del equipo 2 (rival / monstruos)
+   # roca   c caja   t árbol   p pilar   m muro               → obstáculos ALTOS: no se pisan y TAPAN la línea de visión
+   f valla baja   o agujero   ~ agua/lava                     → obstáculos BAJOS: no se pisan, pero se ve y se lanza por encima
+Los mapas pueden ser de cualquier tamaño (8×8 pequeño … 17×13 grande) y de cualquier forma. Todas las filas pueden tener distinto largo.
+Pon 3 o más casillas '1' y 3 o más '2' (4-6 es lo normal). Que TODO el suelo esté conectado (si no, hay zonas inalcanzables).
+Para que sea justo, dibuja el mapa simétrico girado 180° (lo que hay arriba-izquierda también está abajo-derecha).
+
+ARENA('mi_mapa',{n:'Mi Mapa',
+ art:{src:'assets/arenas/pradera.jpg'},          // imagen de fondo (difuminada). Puedes reutilizar una de assets/arenas/
+ bg:['#3a8a4a','#1d4a25'],                         // degradado de respaldo si la imagen no carga
+ fx:'leaf',                                        // partículas: ember | leaf | bubble | cloud | mote
+ wx:[['wind',.4],['none',.4],['rain',.2]],         // clima AUTOMÁTICO con su probabilidad: none | wind | rain
+ mobs:3,                                           // cuántos monstruos salen en el modo Monstruos (máx. = nº de casillas '2')
+ theme:{t:['#efe8c4','#e1d9ae'],                   // colores de las baldosas (ajedrezado)
+        ln:'rgba(255,255,255,.6)',                 // línea entre baldosas
+        sd:['#a98a5c','#8a6d44'],                  // lados del tablero (derecho, izquierdo)
+        lip:'#79b83a',                             // franja de césped en el borde (null = sin franja)
+        pit:['#2a2016','#8b6b3e'],                 // agujero: [fondo, pared]
+        liq:['#4fb3ff','#9bdcff'],                 // agua o lava
+        rock:['#b9b8ae','#8f8e86','#6f6e68'],      // roca [cara de arriba, izquierda, derecha]
+        wood:['#d29a55','#a8742f','#7d5223'],      // cajas y vallas
+        leaf:['#4fae3f','#2f8230'], trunk:'#6b4a2a',  // árboles
+        stone:['#c9c8bd','#9d9c92','#7a7970']},    // pilares y muros
+ map:[
+  '··.....··',
+  '·.......·',
+  '...t.o...',
+  '1f......2',
+  '11c.#.c22',
+  '1......f2',
+  '...o.t...',
+  '·.......·',
+  '··.....··'
+ ]});
+
+PNG propios de obstáculos (opcional): en js/game/maps.js pon  png:true  al obstáculo y guarda  assets/obstacles/<id>.png
+(roca, caja, arbol, pilar, muro, valla; fondo transparente). Si no existe el PNG se dibuja el obstáculo del tema.

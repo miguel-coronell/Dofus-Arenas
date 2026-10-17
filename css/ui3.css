@@ -1,0 +1,78 @@
+/* ui3.css · v13: imagen del mapa a pantalla completa · menú de navegación abajo a la derecha (estilo Dofus) · chat por canales · icono de equipo/mazmorras */
+
+/* ---- barra superior: ya solo personaje, kamas, modo y «Combatir» ---- */
+#top{gap:10px}
+
+/* ---- menú de navegación: abajo a la derecha ---- */
+#nav{position:absolute;right:10px;bottom:10px;z-index:4;display:grid;grid-template-columns:repeat(2,54px);gap:5px;padding:6px;background:rgba(43,42,39,.95);border:2px solid #111;box-shadow:0 0 0 1px var(--ln),0 6px 18px #000a;border-radius:12px}
+#nav button{position:relative;width:54px;height:52px;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:linear-gradient(#4a4843,#33322e);border:2px solid #111;border-radius:10px;box-shadow:inset 0 0 0 1px var(--ln)}
+#nav button .ic{font-size:22px;line-height:1}
+#nav button small{font:700 9px/1 sans-serif;color:#d8d2c0;letter-spacing:.2px}
+#nav button:hover:not(:disabled){border-color:var(--g2);background:linear-gradient(#5a5853,#3e3d39)}
+#nav button:active{transform:translateY(1px)}
+#nav .dot{right:2px;top:2px}
+#navt{display:none!important}
+
+/* ---- chat por canales (sala y combate) ---- */
+#chat{position:absolute;left:10px;bottom:10px;width:min(400px,calc(100% - 20px));display:flex;flex-direction:column;background:rgba(27,26,24,.9);border:2px solid #111;border-radius:10px;box-shadow:0 0 0 1px var(--ln),0 6px 18px #000a;z-index:3;pointer-events:auto}
+body:not(.hub) #chat{bottom:calc(var(--hud,110px) + 18px)}
+.ch-h{display:flex;align-items:flex-end;gap:3px;padding:3px 3px 0;border-bottom:2px solid #111;background:linear-gradient(#3c3a36,#25241f);border-radius:8px 8px 0 0}
+#chtabs{display:flex;flex:1;min-width:0;gap:2px;overflow-x:auto;scrollbar-width:none}#chtabs::-webkit-scrollbar{display:none}
+#chtabs button{position:relative;flex:none;display:flex;align-items:center;gap:3px;padding:3px 7px;font-size:11px;line-height:1.2;background:#25241f;border:1px solid #111;border-bottom:0;border-radius:7px 7px 0 0;color:#b9b3a2}
+#chtabs button span{font-size:14px}#chtabs button b{font-weight:700;display:none}
+#chtabs button.on{background:linear-gradient(var(--g1),var(--g2));color:var(--gt)}#chtabs button.on b{display:inline}
+#chtabs button:not(.on):hover{color:#fff;border-color:var(--g2)}
+#chtabs em{position:absolute;right:-3px;top:-5px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:#d23b34;color:#fff;font:800 10px/15px sans-serif;font-style:normal;text-align:center;border:1px solid #111}
+#chmin{flex:none;width:26px;height:22px;padding:0;margin-bottom:2px;font-size:13px;line-height:1;background:#3e3d39;border:1px solid #111;border-radius:6px}
+#chl{height:132px;overflow-y:auto;padding:5px 8px;font-size:12px;line-height:1.4;touch-action:pan-y;user-select:text}
+#chat.col #chl,#chat.col #chf{display:none}#chat.col .ch-h{border-bottom:0;border-radius:8px}
+#chf{display:flex;gap:4px;padding:4px;border-top:1px solid var(--ln)}
+#chf select{flex:none;width:104px;padding:5px 4px;font-size:12px;background:var(--dk3)}
+#chf input{flex:1;min-width:0;padding:6px 8px;font-size:13px;cursor:text;background:var(--dk3);border:2px solid var(--ln)}#chf input:focus{outline:0;border-color:var(--g1)}
+#chf button{padding:4px 10px;background:linear-gradient(var(--g1),var(--g2));border:2px solid var(--g3);color:var(--gt);font-weight:800}
+/* color por canal (el nombre de cada canal marca la línea cuando ves «Todo») */
+.lg{word-wrap:break-word}.lg .ch-tag{font-style:normal;margin-right:4px;opacity:.9}
+.lg.ch-equipo{color:#8fd0ff}.lg.ch-comercio{color:#ffd24a}.lg.ch-oficios{color:#c9a0ff}.lg.ch-general{color:#e6e0d0}
+.lg.me{color:#9bd54a}.lg.sys{color:#9bd54a;font-style:italic}.lg.ally{color:#8fd0ff}
+.lg.ch-combate.rd{color:#ffd24a}.lg.ch-combate.foe{color:#ff9a90}.lg.ch-combate.ally{color:#8fd0ff}.lg.ch-combate.cast{color:#d8d2c0}.lg.ch-combate.dmg{color:#ff7468}.lg.ch-combate.heal{color:#7ee07a}.lg.ch-combate.sum{color:#c9a0ff}.lg.ch-combate.kill{color:#ffb347}
+#chat[data-say=equipo] #chf input:focus{border-color:#8fd0ff}#chat[data-say=comercio] #chf input:focus{border-color:#ffd24a}#chat[data-say=oficios] #chf input:focus{border-color:#c9a0ff}
+
+/* ---- sala: el botón «Abrir» al centro, sin chat que lo empuje ---- */
+#hubact{bottom:34px}
+
+/* ---- icono de equipo / mazmorras (solo en la sala, a un costado) ---- */
+#pty{position:absolute;right:10px;top:10px;z-index:3;display:none;flex-direction:column;align-items:center;gap:6px;width:74px;padding:6px;background:rgba(43,42,39,.95);border:2px solid #111;box-shadow:0 0 0 1px var(--ln),0 6px 18px #000a;border-radius:12px}
+body.hub #pty{display:flex}
+.py-d{width:60px;height:56px;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:linear-gradient(var(--g1),var(--g2));border:2px solid var(--g3);color:var(--gt);border-radius:10px}
+.py-d span{font-size:26px;line-height:1}.py-d small{font:800 9px/1 sans-serif}
+.py-s{width:60px;padding:3px 0;font-size:11px;font-weight:700;border-radius:10px;background:var(--dk3)}.py-s.solo{color:#ffd24a}.py-s:disabled{opacity:.6;cursor:default}
+.py-m{position:relative;width:54px;height:54px;padding:0;overflow:hidden;border-radius:10px;border:3px solid var(--g2);background:radial-gradient(circle at 35% 30%,#6a675f,#2b2a27)}
+.py-m img{display:block;width:100%;height:100%;object-fit:cover}
+.py-m.me{border-color:#ffd84a;cursor:default}
+.py-m.off{filter:grayscale(1) brightness(.6)}
+.py-m.empty{border-style:dashed;border-color:#5a5853;background:var(--dk3);color:#8f8a7b;font-size:22px}.py-m.empty:hover{border-color:var(--g1);color:var(--g1)}
+.py-m u{position:absolute;right:0;top:0;width:18px;height:18px;display:none;place-items:center;font:800 11px/1 sans-serif;text-decoration:none;background:#d23b34;color:#fff;border-bottom-left-radius:8px}
+.py-m:hover u{display:grid}
+
+/* ---- combate: lista de turnos y retos sin chocar con el menú de abajo ---- */
+#turns{max-height:calc(100% - 252px)}
+#retos{left:auto!important;right:78px;top:68px;bottom:auto}
+
+/* ---- pantallas pequeñas: menú plegable encima del HUD, chat recogido por defecto ---- */
+@media(max-width:900px){
+ #nav{grid-template-columns:repeat(2,46px);bottom:calc(var(--hud,110px) + 14px);padding:4px;gap:4px}
+ #nav button{width:46px;height:46px}#nav button .ic{font-size:19px}#nav button small{font-size:8px}
+ #navt{display:flex!important;grid-column:1/-1;width:100%!important;height:26px!important;flex-direction:row!important;font-size:15px}
+ #nav.c{grid-template-columns:46px}#nav.c button:not(#navt){display:none}
+ body.hub #nav{bottom:10px}
+ #chat{width:calc(100% - 132px)}
+ body:not(.hub) #chat{bottom:calc(var(--hud,110px) + 14px)}
+ #chl{height:96px}
+}
+@media(max-width:700px){
+ #hubact{bottom:70px}
+ #retos{left:8px!important;right:auto!important;top:auto;bottom:calc(var(--hud,110px) + 54px)}
+ #turns{max-height:calc(100% - 20px)}
+ #pty{width:62px;gap:4px;padding:4px}.py-d{width:52px;height:48px}.py-s{width:52px}.py-m{width:46px;height:46px}
+}
+@media(max-height:560px){#chl{height:70px}#nav{grid-template-columns:repeat(4,46px)}#nav button{height:44px}#turns{max-height:calc(100% - 130px)}#chat{width:min(400px,calc(100% - 250px))}}

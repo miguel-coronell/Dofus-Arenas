@@ -1,0 +1,33 @@
+Pon aquí los PNG de los personajes (fondo transparente, mirando a la DERECHA). Nombre = <clase>_<m|f>.png  (m = masculino, f = femenino).
+No hace falta redimensionarlos: el juego los ajusta a la misma altura (CFG.spriteH en js/core/util.js). Mientras falte un PNG se muestra el icono de la clase.
+
+feca_m.png
+feca_f.png
+osamodas_m.png
+osamodas_f.png
+anutrof_m.png
+anutrof_f.png
+sram_m.png
+sram_f.png
+xelor_m.png
+xelor_f.png
+zurkarak_m.png
+zurkarak_f.png
+aniripsa_m.png
+aniripsa_f.png
+yopuka_m.png
+yopuka_f.png
+ocra_m.png
+ocra_f.png
+sadida_m.png
+sadida_f.png
+sacrogrito_m.png
+sacrogrito_f.png
+pandawa_m.png
+pandawa_f.png
+tymador_m.png
+tymador_f.png
+zobal_m.png
+zobal_f.png
+steamer_m.png
+steamer_f.png

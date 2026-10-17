@@ -1,0 +1,12 @@
+{
+  "name": "coliseo-web",
+  "version": "0.17.0",
+  "private": true,
+  "description": "Coliseo: combate táctico por turnos con cuentas, PvP online y guardado en la nube.",
+  "scripts": {
+    "start": "npx --yes serve . -l 5173",
+    "check": "node tools/check-data.js && node tools/check-rules.js && node tools/check-html.js",
+    "release": "bash scripts/release.sh"
+  },
+  "engines": { "node": ">=18" }
+}

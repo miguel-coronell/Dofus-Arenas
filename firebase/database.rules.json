@@ -1,0 +1,85 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "saves": {
+      "$uid": {
+        ".read": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && auth.uid === $uid",
+        ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['d','ts'])",
+        "d": {
+          ".validate": "newData.isString() && newData.val().length <= 1000000"
+        },
+        "ts": {
+          ".validate": "newData.isNumber()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "chat": {
+      ".read": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous'",
+      "$canal": {
+        ".validate": "$canal === 'general' || $canal === 'comercio' || $canal === 'oficios'",
+        "$id": {
+          ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && !data.exists()",
+          ".validate": "newData.hasChildren(['u','n','t','ts']) && newData.child('u').val() === auth.uid",
+          "u": {
+            ".validate": "newData.isString()"
+          },
+          "n": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 20"
+          },
+          "t": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
+          },
+          "ts": {
+            ".validate": "newData.isNumber() && newData.val() > now - 120000 && newData.val() < now + 120000"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "lobby": {
+      "q": {
+        "$fmt": {
+          ".read": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous'",
+          ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && ($fmt === '1v1' || $fmt === '2v2' || $fmt === '3v3')",
+          "$u": {
+            ".validate": "newData.hasChildren(['uid','build','ts']) && newData.child('uid').val() === $u && newData.child('ts').isNumber()"
+          }
+        }
+      },
+      "matched": {
+        "$uid": {
+          ".read": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && auth.uid === $uid",
+          ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && ((!newData.exists() && auth.uid === $uid) || (newData.isString() && newData.val().length <= 40 && root.child('matches/'+newData.val()+'/meta/host').val() === auth.uid && root.child('matches/'+newData.val()+'/meta/uids/'+$uid).exists()))"
+        }
+      }
+    },
+    "matches": {
+      "$mid": {
+        ".read": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && data.child('meta/uids/'+auth.uid).exists()",
+        "meta": {
+          ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && !data.exists() && newData.child('host').val() === auth.uid && newData.child('uids/'+auth.uid).exists()",
+          ".validate": "newData.hasChildren(['host','fmt','seed','uids','players']) && (newData.child('fmt').val() === '1v1' || newData.child('fmt').val() === '2v2' || newData.child('fmt').val() === '3v3')"
+        },
+        "chat": {
+          "$n": {
+            ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && root.child('matches/'+$mid+'/meta/uids/'+auth.uid).exists() && !data.exists() && newData.child('u').val() === auth.uid",
+            ".validate": "newData.hasChildren(['u','n','t','ts']) && newData.child('t').isString() && newData.child('t').val().length <= 120 && newData.child('n').isString() && newData.child('n').val().length <= 20"
+          }
+        },
+        "acts": {
+          "$n": {
+            ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && root.child('matches/'+$mid+'/meta/uids/'+auth.uid).exists() && !data.exists() && newData.child('u').val() === auth.uid",
+            ".validate": "newData.hasChildren(['u','k']) && newData.child('k').isString() && newData.child('k').val().length <= 12"
+          }
+        }
+      }
+    }
+  }
+}
