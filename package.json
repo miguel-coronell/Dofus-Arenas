@@ -1,6 +1,6 @@
 {
   "name": "coliseo-web",
-  "version": "0.17.0",
+  "version": "0.29.0",
   "private": true,
   "description": "Coliseo: combate táctico por turnos con cuentas, PvP online y guardado en la nube.",
   "scripts": {

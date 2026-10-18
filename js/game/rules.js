@@ -127,5 +127,16 @@ const Rules=(()=>{
    else if(x.k==='sm'||x.k==='ob'){const q=Registry.objs[x.o];o.push((x.k==='sm'?'Invoca ':q.kind==='trap'?'Coloca la trampa ':q.kind==='bomb'?'Coloca la bomba ':'Coloca el glifo ')+q.n+': '+q.d)}
    else if(x.k==='det')o.push('Detona todas tus bombas');else if(x.k==='evo')o.push('Evoluciona tus torretas (máx. nivel III)');else if(x.k==='dp')o.push('Desembruja (quita bonus y armaduras)');else if(x.k==='die')o.push('Se sacrifica')}
   return o.join(' · ')+' | '+sp.pa+' PA · alcance '+(sp.tg==='s'?'propio':sp.r[0]+'-'+sp.r[1])+(sp.aoe!=null?' · zona '+sp.aoe:'')+(sp.cd?' · recarga '+sp.cd:'')+' · máx '+sp.lim+'/turno'+(sp.nlos?' · sin línea de visión':'')}
+/* PREVISIÓN del hechizo (no usa el azar ni cambia nada): qué haría el hechizo de nivel lv lanzado por e sobre la celda (x,y).
+    Devuelve una fila por personaje afectado: {e, lo, hi (daño mínimo-máximo ya con resistencias y armadura, tope = su vida), hl, hh (cura), dot (veneno por turno), kill (podría morir), sure (morirá seguro)}. Misma cuenta que fx1/hit. */
+ function preview(S,e,sp,lv,x,y){const k=1+(lv-1)*PROG.spBonus,t=sp.tg==='s'?e:sp.tg==='c'?null:occ(S,x,y),cx=sp.tg==='s'?e.x:x,cy=sp.tg==='s'?e.y:y,M=new Map(),
+   area=sp.aoe!=null?S.ents.filter(q=>q.hp>0&&q!==e&&(sp.at==='all'||q.team!==e.team)&&Math.abs(q.x-cx)+Math.abs(q.y-cy)<=sp.aoe):null;
+  for(const f of sp.e){if(f.k!=='d'&&f.k!=='h'&&f.k!=='dot')continue;const self=f.on==='s'||(f.k==='h'&&sp.tg!=='a'),gs=area&&!self?area:[self?e:t];
+   for(const g of gs){if(!g||g.hp<=0)continue;let o=M.get(g);if(!o)M.set(g,o={e:g,lo:0,hi:0,hl:0,hh:0,dot:null,kill:false,sure:false});
+    if(f.k==='d'){const m=(1+P(e,f.el)/100)*(1-R(g,f.el)/100);o.lo+=Math.round(f.a*k*m);o.hi+=Math.round(f.b*k*m)}
+    else if(f.k==='h'){const m=1+P(e,f.el||'agua')/100;o.hl+=Math.round(f.a*k*m);o.hh+=Math.round(f.b*k*m)}
+    else{const m=1+P(e,f.el)/100,q=1-R(g,f.el)/100;o.dot={el:f.el,lo:Math.round(Math.round(f.a*k*m)*q),hi:Math.round(Math.round(f.b*k*m)*q),tn:f.tn}}}}
+  return[...M.values()].map(o=>{const g=o.e,ar=g.ar.reduce((s,a)=>s+a.v,0);o.lo=Math.min(g.hp,Math.max(0,o.lo-ar));o.hi=Math.min(g.hp,Math.max(0,o.hi-ar));o.hl=Math.min(g.mhp-g.hp,o.hl);o.hh=Math.min(g.mhp-g.hp,o.hh);
+   o.kill=o.hi>0&&o.hi>=g.hp;o.sure=o.lo>0&&o.lo>=g.hp;return o})}
  const init=(S,sd)=>{S.rnd=seed(sd);S.objs=[];S.oid=0;S.r=(a,b)=>a+Math.floor(S.rnd()*(b-a+1))};
- return{init,stats,ent,ready,can,range,cast,begin,win,describe,P,R,blocked,occ,land,alive,objAt,kind,opaque,los,usable,useItem}})();
+ return{init,stats,ent,ready,can,range,preview,cast,begin,win,describe,P,R,blocked,occ,land,alive,objAt,kind,opaque,los,usable,useItem}})();

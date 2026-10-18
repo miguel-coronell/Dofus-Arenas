@@ -3,7 +3,7 @@
    Estadísticas nuevas:  rtierra · rfuego · ragua · raire  = % de resistencia a ESE elemento (negativo = debilidad; tope ±50 contando todo)
    Ayudantes:
      PATCH(idObjeto, {stats})        → suma estadísticas a un objeto que ya existe (ej. PATCH('raiz_capa',{rtierra:3}))
-     SBONUS(idSet, nºPiezas, {bono}) → suma bono a un escalón del set (si el escalón no existe, lo crea). OJO: solo cuenta el escalón más alto alcanzado, no se acumulan
+     SBONUS(idSet, nºPiezas, {bono}) → suma bono a un escalón del set (si el escalón no existe, lo crea). Los escalones se ACUMULAN (el de 4 piezas se suma al de 2): escribe en cada uno el TOTAL que quieres en ese escalón; el motor lo convierte en incrementos (Items.normSets)
      IT(...) / ISET(...)             → igual que en base.js
    ============================================================ */
 const PATCH=(id,st)=>{const it=Registry.items[id];if(!it)return;for(const k in st)it.st[k]=(it.st[k]||0)+st[k]};
@@ -28,7 +28,7 @@ IT('brasa_escudo','Rodela Brasa','🛡️','escudo',20,1900,{vit:45,res:2,rfuego
 IT('abismo_anillo2','Sortija Abismo','💍','anillo',50,4600,{vit:60,agua:48,ragua:4},{set:'abismo'});
 IT('abismo_escudo','Rodela Abismo','🛡️','escudo',50,7200,{vit:100,res:3,ragua:8},{set:'abismo'});
 IT('titan_anillo2','Sortija Titán','💍','anillo',100,19000,{vit:120,pow:7,rtierra:4},{set:'titan'});
-/* SFULL(set,{extra}) = bono de «set completo» (9 piezas) = el escalón de 7 + extra. Ojo: solo cuenta el escalón MÁS ALTO alcanzado (no se suman), así que cada escalón debe incluir al anterior */
+/* SFULL(set,{extra}) = bono de «set completo» (9 piezas) = el escalón de 7 + extra. Escribe cada escalón como el total de ese punto (incluye al anterior): el motor calcula la diferencia */
 const SFULL=(id,b)=>{const S=Registry.isets[id];if(!S)return;const o=S.b[9]={...S.b[7]};for(const k in b)o[k]=(o[k]||0)+b[k]};
 SFULL('raiz',{vit:60,rtierra:4});SFULL('brasa',{vit:100,rfuego:5,rtierra:3});SFULL('abismo',{vit:200,ragua:6,rfuego:4});SFULL('titan',{vit:500,pow:20,res:4});
 
@@ -107,3 +107,4 @@ IT('escudo_aegis','Égida Eterna','🛡️','escudo',130,36000,{vit:260,res:8,rt
 IT('espada_hierro','Espada de Hierro','🗡️','arma',12,700,{tierra:30,vit:10});
 IT('baston_tormenta','Bastón de Tormenta','🪄','arma',35,3900,{aire:75,vit:25});
 IT('lanza_obsidiana','Lanza de Obsidiana','🔱','arma',70,14500,{fuego:90,tierra:60,vit:40});
+Items.normSets();   // convierte los escalones de todos los sets (base + extra) en incrementos acumulables

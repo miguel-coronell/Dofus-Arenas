@@ -34,6 +34,11 @@ const Net={uid:null,db:null,acts:null,onAct:null,sq:null,ready:false,pend:[],
   try{await Net.db.ref('matches/'+mid+'/meta').set({host:Net.uid,fmt,seed,uids,players});
    await Promise.all(players.filter(p=>p.uid!==Net.uid).map(p=>Net.db.ref('lobby/matched/'+p.uid).set(mid)))}catch(e){console.error('Coliseo',e);Net.cancel();h.lost&&h.lost();return}
   Net.cancel();Net.start(mid,h.found)},
+ /* COOPERATIVO: el que inicia el combate monta la partida con los compañeros que pulsaron «Unirse» y avisa a cada uno en lobby/matched/<uid> */
+ async hostCoop(roster,foes,lvl,h,extra){const mid=Net.db.ref('matches').push().key,seed=Math.floor(Math.random()*2147483647),players=roster.map(p=>({uid:p.uid,build:p.build,team:0})),uids={};players.forEach(p=>uids[p.uid]=true);
+  try{await Net.db.ref('matches/'+mid+'/meta').set({host:Net.uid,fmt:'coop',seed,uids,players,foes,lvl,...(extra||{})});
+   await Promise.all(players.filter(p=>p.uid!==Net.uid).map(p=>Net.db.ref('lobby/matched/'+p.uid).set(mid)))}catch(e){console.error('Coop',e);h.lost&&h.lost();return}
+  Net.start(mid,h.found)},
  cancel(){const S=Net.sq;if(!S)return;Net.sq=null;S.done=true;clearTimeout(S.rt);S.on.forEach(f=>{try{f()}catch(e){}});
   if(Net.db&&Net.uid){const m=Net.db.ref('lobby/q/'+S.fmt+'/'+Net.uid);try{m.onDisconnect().cancel()}catch(e){}m.remove()}},
  searching:()=>!!Net.sq,
@@ -41,16 +46,21 @@ const Net={uid:null,db:null,acts:null,onAct:null,sq:null,ready:false,pend:[],
  async start(mid,cb){let m=null;try{m=(await Net.db.ref('matches/'+mid+'/meta').once('value')).val()}catch(e){}
   const pl=m&&Array.isArray(m.players)?m.players:[];
   if(!m||!pl.length||!pl.some(p=>p.uid===Net.uid)||!pl.every(p=>p.build&&Net.sane(p.build)))return cb(null);
-  const n=pl.length/2,ids=Maps.ids().filter(i=>{const A=Registry.arenas[i];return A.spawn[0].length>=n&&A.spawn[1].length>=n}).sort();
+  const co=m.fmt==='coop',fr=co&&Array.isArray(m.foes)?m.foes:[],fo=fr.filter(id=>Registry.monsters[id]);       // cooperativo: jugadores (equipo 0) contra un grupo de monstruos (o una sala de mazmorra)
+  if(co&&(!fo.length||fo.length!==fr.length||fo.length>4||pl.length>4||pl.some(p=>p.team)))return cb(null);
+  const DG=co&&m.dun&&Registry.dungeons[m.dun.id],cx=co?{mult:fo.map((_,i)=>clamp(+(m.mult&&m.mult[i])||1,1,6)),dun:DG?{id:m.dun.id,room:clamp(Math.floor(+m.dun.room)||0,0,DG.rooms-1)}:null,hps:m.hp&&typeof m.hp==='object'?m.hp:null,host:m.host}:{};
+  const n=pl.length/2,ids=Maps.ids().filter(i=>{const A=Registry.arenas[i];return co?A.spawn[0].length>=pl.length&&A.spawn[1].length>=fo.length:A.spawn[0].length>=n&&A.spawn[1].length>=n}).sort();
+  if(!ids.length)return cb(null);
+  if(Net.acts){try{Net.acts.off()}catch(e){}Net.acts=null}if(Net.dck){try{Net.dck.onDisconnect().cancel()}catch(e){}Net.dck=null}        // viene de otra sala (mazmorra cooperativa): suelta la anterior
   Net.pend=[];Net.ready=false;Net.acts=Net.db.ref('matches/'+mid+'/acts');if(typeof Chat!=='undefined')Chat.subMatch(mid);
   Net.acts.on('child_added',s=>{const a=s.val();if(Net.ready&&Net.onAct)Net.onAct(a);else Net.pend.push(a)});
   Net.dck=Net.acts.push();try{Net.dck.onDisconnect().set({u:Net.uid,k:'quit',dc:1})}catch(e){}        // si se cae la conexión a media partida, los demás lo ven como abandono
-  cb({players:pl,seed:m.seed,fmt:m.fmt,mid,uid:Net.uid,arena:ids[m.seed%ids.length]})},
+  cb({players:pl,seed:m.seed,fmt:m.fmt,mid,uid:Net.uid,arena:ids[m.seed%ids.length],foes:co?fo:null,lvl:co?clamp(+m.lvl||1,1,PROG.maxLv):0,...cx})},
  /* el combate ya está dibujado: ahora sí se ejecutan las acciones que llegaron mientras tanto */
  go(){Net.ready=true;const L=Net.pend||[];Net.pend=[];L.forEach(a=>Net.onAct&&Net.onAct(a))},
  send(a){Net.acts&&Net.acts.push(a)},
  leave(){Net.cancel();
-  if(Net.acts){if(Net.uid&&!(G.mode==='pvp'&&(G.over||G.left)))Net.send({k:'quit',u:Net.uid});   // salir de una partida en curso (o encontrada y aún sin empezar) = abandonar
+  if(Net.acts){if(Net.uid&&!(G.net&&(G.over||G.left)))Net.send({k:'quit',u:Net.uid});   // salir de una partida en curso (o encontrada y aún sin empezar) = abandonar
    Net.acts.off();Net.acts=null;if(typeof Chat!=='undefined')Chat.subMatch(null)}
   if(Net.dck){try{Net.dck.onDisconnect().cancel()}catch(e){}Net.dck=null}Net.ready=false;Net.pend=[];
   if(typeof Coli!=='undefined')Coli.reset()}};

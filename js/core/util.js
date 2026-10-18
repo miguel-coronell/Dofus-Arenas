@@ -1,7 +1,7 @@
 /* Utilidades + Registry. Para agregar contenido: Registry.add('chars'|'arenas'|'spells'|'monsters', id, definicion) */
 const CFG={
  spriteH:80,                                  // ALTURA (unidades de juego) de TODOS los personajes y monstruos → mismo tamaño siempre. Bájalo para hacerlos más pequeños.
- zoomMin:.4,zoomMax:3,                        // límites del zoom
+ scale:1,                                    // ESCALA FIJA del mapa (1 = tamaño real). No cambia con la ventana ni hay zoom: la cámara sigue al jugador y puedes arrastrar el mapa.
  tileD:12                                     // grosor (unidades) del borde del tablero
 };
 const OL='#1b1410';                           // color de contorno

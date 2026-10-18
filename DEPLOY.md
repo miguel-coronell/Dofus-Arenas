@@ -14,6 +14,10 @@ Orden recomendado: **1) Firebase → 2) GitHub → 3) Vercel → 4) autorizar el
 6. *(Recomendado)* [Google Cloud Console → Credenciales](https://console.cloud.google.com/apis/credentials) → tu «Browser key» → **Restricciones de sitios web** → añade `https://TU-DOMINIO/*` y `https://TU-PROYECTO.firebaseapp.com/*`.
 7. *(Recomendado)* Configura una **alerta de presupuesto** (plan Spark es gratis y suficiente para jugar con amigos).
 
+> **Actualizando a 0.29 (buscador de jugadores):** vuelve a pegar y publicar `firebase/database.rules.json` (nodo nuevo: `names`). Sin eso la pestaña «🔍 Buscar» de Amigos dirá que no pudo buscar.
+
+> **Actualizando a 0.18:** vuelve a pegar y publicar `firebase/database.rules.json` (nodos nuevos: world, online, soc, inbox, dm, trades). Sin eso nadie ve a nadie ni funcionan amigos/intercambios.
+
 ## 2 · GitHub
 
 ```bash

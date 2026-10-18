@@ -66,7 +66,7 @@ const A={user:null,local:false,booted:false,mode:'in',cool:0,Cloud,
   try{await Boot.run()}catch(e){console.error(e);A.load('No se pudo cargar el juego ('+e.message+'). Recarga la página.',[['Recargar',()=>location.reload()]]);return}
   A.booted=true;if(!A.local)Cloud.hook();A.chip(u);$('#auth').hidden=true;document.body.classList.add('in-game');
   if(A.verifyNote){T.toast('✉ Te enviamos un correo para verificar tu cuenta. Revisa también la carpeta de spam.');A.verifyNote=false}},
- chip(u){const b=$('#acct');if(!b)return;const n=A.local?'Modo local':(u.displayName||(u.email||'').split('@')[0]||'Jugador');$('#acctN').textContent='👤 '+n.slice(0,16);b.title=A.local?'Estás jugando sin cuenta · pulsa para volver al login':(u.email||'Tu cuenta')+' · pulsa para cerrar sesión';b.hidden=false;b.onclick=()=>A.logout()},
+ chip(u){const b=$('#acct');if(!b)return;const n=A.local?'Modo local':(u.displayName||(u.email||'').split('@')[0]||'Jugador');$('#acctN').textContent='👤 '+n.slice(0,16);b.title=(A.local?'Modo local':(u.email||'Tu cuenta'))+' · pulsa para abrir el menú (salir del juego, cambiar de personaje o de servidor)';b.hidden=false;b.onclick=()=>GMenu.open()},
  async logout(force){
   if(!force&&!confirm(A.local?'¿Volver a la pantalla de login? Tu progreso local se conserva en este navegador.':'¿Cerrar sesión?\nTu progreso queda guardado en tu cuenta.'))return;
   if(A.local){location.reload();return}

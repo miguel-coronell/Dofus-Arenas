@@ -2,7 +2,7 @@
    CATÁLOGO DE OBJETOS · AQUÍ se añaden objetos y sets nuevos (una línea cada uno). Nada más: el mercadillo y el inventario los muestran solos.
    Para otra zona/mazmorra crea OTRO archivo en js/data/items/ (copia este) y añade su <script> en index.html tras base.js.
    KIND(id, singular, plural, icono, huecos)         → categoría + hueco de equipo (huecos: 2 = dos anillos)
-   ISET(id, nombre, {2:{bono},4:{bono},7:{bono}}, color) → bono por nº de piezas del set equipadas (cuenta el escalón más alto)
+   ISET(id, nombre, {2:{bono},4:{bono},7:{bono}}, color) → bono por nº de piezas del MISMO set equipadas (los escalones se acumulan; además cada pieza extra da +4 % de afinidad a las piezas del set)
    IT(id, nombre, icono, tipo, nivel, precio, {stats}, {set:'idset', d:'texto', nosale:true})
       · las piezas con set:'…' se FABRICAN en los OFICIOS (js/data/crafts.js: receta = recursos + kamas). No se venden en la tienda; se pueden poner a la venta en tu puesto del mercado
       · el precio es el precio BASE: el mercado lo sube y baja según oferta, demanda y noticias (js/game/economy.js)

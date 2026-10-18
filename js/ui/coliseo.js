@@ -10,7 +10,7 @@ const Coli={fmt:'1v1',st:null,found:null,msg:'',iv:0,cd:0,
   if(!G.hub)Hub.enter();Coli.render();$('#colo').hidden=false;G.paused=true},
  close(){$('#colo').hidden=true;Win.unpause()},
  /* ---- búsqueda ---- */
- async start(){if(Coli.busy())return;const f=Coli.fmt;Coli.msg='Conectando…';Coli.render();
+ async start(){if(Coli.busy())return;Soc.duelT=0;const f=Coli.fmt;Coli.msg='Conectando…';Coli.render();
   if(!(await Net.init())){Coli.msg='⚠ El Coliseo online no está activo: falta configurar Firebase (js/net/firebase-config.js · ver README). Sin jugadores reales no hay partidas.';Coli.render();return}
   Coli.msg='';Coli.st={fmt:f,t0:Date.now(),n:0,need:Net.FMT[f].n*2};Coli.tick();clearInterval(Coli.iv);Coli.iv=setInterval(Coli.tick,1000);Coli.render();
   Net.search(f,JSON.parse(JSON.stringify(PJ)),{count:(n,need)=>{if(Coli.st){Coli.st.n=n;Coli.paint()}},found:m=>Coli.onFound(m),
@@ -43,8 +43,8 @@ const Coli={fmt:'1v1',st:null,found:null,msg:'',iv:0,cd:0,
   const draw=()=>{$('#mfound').innerHTML=`<div class="mf"><h2>⚔️ ¡Partida encontrada!</h2><div class="mf-t">${esc(Coli.label(m.fmt))}</div><div class="mf-cols"><div><h4>Tu equipo</h4><ul>${tm(mine)}</ul></div><div class="mf-vs">VS</div><div><h4>Rivales</h4><ul>${tm(1-mine)}</ul></div></div><div class="mf-n">Empieza en <b>${n}</b>…</div></div>`};
   draw();$('#mfound').hidden=false;Coli.cd=setInterval(()=>{n--;if(n<=0){clearInterval(Coli.cd);Coli.cd=0;Coli.go()}else draw()},1000)},
  go(){const m=Coli.found;if(!m)return;Coli.found=null;
-  ['#inv','#jobs','#mkt','#sheet','#spells','#sets','#party','#dung','#result','#colo','#mfound','#qchip'].forEach(id=>{const e=$(id);if(e){e.hidden=true;e.dataset.min=''}});$('#dock').textContent='';G.paused=false;
-  Hub.leave();UI.foc=UI.hov=null;startBattle(m.arena,{mode:'pvp',players:m.players,seed:m.seed,uid:m.uid,mid:m.mid});mapInfo();rs();fitView();Net.go();
+  ['#inv','#jobs','#mkt','#sheet','#spells','#sets','#party','#dung','#result','#colo','#friends','#trade','#mfound','#qchip'].forEach(id=>{const e=$(id);if(e){e.hidden=true;e.dataset.min=''}});$('#dock').textContent='';G.paused=false;
+  const dl=Soc.duelT&&Date.now()-Soc.duelT<120000;Soc.duelT=0;Hub.leave();UI.foc=UI.hov=null;startBattle(m.arena,{mode:'pvp',players:m.players,seed:m.seed,uid:m.uid,mid:m.mid});G.duel=!!dl;mapInfo();rs();fitView();Net.go();
   const mt=G.me.team,nm=t=>G.ents.filter(e=>e.team===t).map(e=>e.n).join(', ');UI.msg('¡'+Coli.label(m.fmt)+'! Tu equipo: '+nm(mt)+' · Rivales: '+nm(1-mt));UI.hud()}};
 $('#colo').addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
  if(t.id==='cqx'||t.dataset.q==='close'){Coli.close();return}

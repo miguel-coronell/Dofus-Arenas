@@ -29,37 +29,37 @@ function invDetail(){const b=PJ,it=Registry.items[INV.sel];
   const t=Items.bonus(b);return`<div class="dt-det idle"><b class="dt-h">Oficios</b><div class="dt-jobs">${J}</div><div class="dt-bonus">${Object.keys(t).length?esc(stTxt(t)):'Sin bonos de equipo'}</div><div class="dt-btns"><button class="dt-lime" data-open="jobs">🔨 Taller</button><button class="dt-lime" data-open="shop">🛒 Mercado</button></div></div>`}
  const S=Registry.isets[it.set],eqSlot=Object.keys(b.eq).find(k=>b.eq[k]===it.id),K=Registry.kinds[it.kind],n=Items.own(b,it.id),gear=K.n>0,cnt=S?Items.setCount(b,it.set):0,sp=Eco.sellPrice(it.id);
  return`<div class="dt-det"><div class="dt-dh"><span class="dt-ic" style="--c:${mkCol(it)}">${it.ico}</span><div><b class="dt-h">${esc(it.n)}${n>1?' ×'+n:''}</b><small class="${gear&&b.lvl<it.lvl?'bad':''}">Nivel ${it.lvl} · ${K.s}${S?' · '+esc(S.n)+' ('+cnt+'/'+Items.setParts(S.id).length+')':''}</small></div></div>
-  ${Object.keys(it.st).length?`<div class="dt-fx">${Object.entries(it.st).map(([k,v])=>`<span>${esc(stTxt({[k]:v}))}</span>`).join('')}</div>`:''}
+  ${Object.keys(it.st).length?`<div class="dt-fx">${stSpans(it)}</div>`:''}
   ${it.use?`<div class="dt-fx"><span>${esc(Items.useTxt(it))}</span></div>`:''}${it.d?`<div class="dt-ds">${esc(it.d)}</div>`:''}
   <div class="dt-btns">${gear?(eqSlot?`<button class="dt-lime" data-un="${eqSlot}">Quitar</button>`:`<button class="dt-lime" data-eq="${it.id}" ${b.lvl>=it.lvl?'':'disabled'}>Equipar</button>`):''}
   <button class="dt-lime alt" data-sell="${it.id}" title="Vender 1 al mercado">Vender · 💰 ${kf(sp)}</button><button class="dt-lime alt" data-list="${it.id}">📋 Al puesto</button></div></div>`}
 function invGrid(){const b=PJ,L=invIds(),cells=L.map(i=>{const n=Items.own(b,i.id),w=Items.worn(b,i.id),lock=Registry.kinds[i.kind].n>0&&b.lvl<i.lvl;
   return`<button class="dt-c${INV.sel===i.id?' sel':''}${lock?' lock':''}" data-i="${i.id}" style="--c:${mkCol(i)}" title="${esc(i.n+' · Nv '+i.lvl+(Object.keys(i.st).length?'\n'+stTxt(i.st):''))}"><span>${i.ico}</span>${n>1?'<u>'+n+'</u>':''}${w?'<em>✔</em>':''}</button>`}).join('');
  const empty=Math.max(0,30-L.length);return cells+'<i class="dt-c void"></i>'.repeat(empty)}
-function renderInv(){const b=PJ,tabs=INVTABS.map(([k,ic,t])=>`<button class="dt-tab${INV.tab===k?' on':''}" data-tab="${k}" title="${t}">${ic}</button>`).join('');
- $('#inv').innerHTML=`<div class="dt-wrap"><div class="dt-p dt-char">${invChar()}</div><div class="dt-p dt-inv"><div class="dt-t"><b>INVENTARIO</b><button id="invx" class="st-x">✕</button></div>
+function renderInv(reset){const b=PJ,tabs=INVTABS.map(([k,ic,t])=>`<button class="dt-tab${INV.tab===k?' on':''}" data-tab="${k}" title="${t}">${ic}</button>`).join('');
+ scrollKeep($('#inv'),[['#invg',!reset],['.dt-mid',!reset]],()=>{$('#inv').innerHTML=`<div class="dt-wrap"><div class="dt-p dt-char">${invChar()}</div><div class="dt-p dt-inv"><div class="dt-t"><b>INVENTARIO</b><button id="invx" class="st-x">✕</button></div>
  <div class="dt-body"><div class="dt-mid">${invDoll()}${invDetail()}</div><div class="dt-right"><div class="dt-tabs">${tabs}</div>
   <div class="dt-flt"><select id="invc" class="st-flt">${KCAT().map(([k,v])=>`<option value="${k}"${k===INV.cat?' selected':''}>${v}</option>`).join('')}</select><input id="invq" class="st-flt" placeholder="Buscar…" value="${esc(INV.q)}" autocomplete="off"></div>
   <div class="dt-grid" id="invg">${invGrid()}</div><div class="dt-foot"><span>🎒 ${b.inv.length} / ${PROG.maxInv} <small>equipo</small></span><span class="dt-k">💰 ${kf(b.kamas)} <u>₭</u></span></div></div></div>
  <div class="dt-msg">${esc(INV.msg)}</div></div></div>`;
- LOOK.portrait($('#invport'),b.look,b.sex,b.cls);invAnim()}
+ });LOOK.portrait($('#invport'),b.look,b.sex,b.cls);invAnim()}
 function invAnim(){cancelAnimationFrame(INV.raf);const f=t=>{const c=$('#invfig');if(!c||$('#inv').hidden){INV.raf=0;return}LOOK.figure(c.getContext('2d'),c.width,c.height,PJ.cls,PJ.sex,PJ.look,t/1000);INV.raf=requestAnimationFrame(f)};INV.raf=requestAnimationFrame(f)}
-function openInv(sel){if(sel)INV.sel=sel;INV.msg='';renderInv();$('#inv').hidden=false;G.paused=true}
+function openInv(sel){if(sel)INV.sel=sel;INV.msg='';renderInv(true);$('#inv').hidden=false;G.paused=true}
 function closeInv(){$('#inv').hidden=true;$('#inv').classList.remove('max');if(overlayOpen()===false)G.paused=false;cancelAnimationFrame(INV.raf)}
 const invSave=e=>{INV.msg=e||'';if(!e&&SAVED)PG.save(PJ);UI.head();if(!$('#sheet').hidden)renderSheet();renderInv()};
 $('#inv').addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;const d=t.dataset,b=PJ;
  if(t.id==='invx'){closeInv();return}
  if(d.s){PG.spend(b,d.s,+d.n);invSave();return}
  if(d.open){if(d.open==='sp'){openSpells()}else if(d.open==='sheet'){renderSheet();$('#sheet').hidden=false}else if(d.open==='respec'){if(confirm('¿Reiniciar tus puntos de capital y de hechizo?')){PG.respec(b);invSave()}}else if(d.open==='jobs')openJobs();else if(d.open==='shop')openShop('buy');return}
- if(d.tab){INV.tab=d.tab;renderInv();return}
+ if(d.tab){INV.tab=d.tab;renderInv(true);return}
  if(d.i){INV.sel=d.i;INV.msg='';renderInv();return}
  if(d.sl){const id=b.eq[d.sl];if(id){INV.sel=id;INV.msg=''}else{INV.cat=(Items.slots().find(s=>s.id===d.sl)||{}).kind||'all';INV.tab='gear'}renderInv();return}
  if(d.eq){invSave(Items.equip(b,d.eq));return}
  if(d.un){Items.unequip(b,d.un);invSave();return}
  if(d.sell){const n=Items.own(b,d.sell);if(Items.worn(b,d.sell)&&n<=Items.worn(b,d.sell)&&!confirm('Lo llevas puesto. ¿Vender igualmente?'))return;invSave(Items.sell(b,d.sell,1));return}
- if(d.list){openShop('lots',d.list)}});
+ if(d.list){openShop('sell',d.list)}});
 $('#inv').addEventListener('dblclick',e=>{const t=e.target.closest('[data-i]');if(!t)return;const it=Registry.items[t.dataset.i];if(it&&Registry.kinds[it.kind].n>0&&!Object.values(PJ.eq).includes(it.id))invSave(Items.equip(PJ,it.id))});
-$('#inv').addEventListener('change',e=>{if(e.target.id==='invc'){INV.cat=e.target.value;renderInv()}});
+$('#inv').addEventListener('change',e=>{if(e.target.id==='invc'){INV.cat=e.target.value;renderInv(true)}});
 $('#inv').addEventListener('input',e=>{if(e.target.id==='invq'){INV.q=e.target.value;$('#invg').innerHTML=invGrid()}});
 $('#inv').addEventListener('pointerdown',e=>{if(e.target===$('#inv'))closeInv()});
 $('#lvl').onclick=()=>openInv();

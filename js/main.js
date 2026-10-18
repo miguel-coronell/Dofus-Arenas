@@ -1,43 +1,48 @@
-/* main.js · arranque: canvas, zoom/arrastre, creador de personaje, UI y bucle de render */
-const cv=$('#c'),ctx=cv.getContext('2d');let VW=800,VH=600,Z=1,dpr=1,OX=0,OY=0;
-const V={zoom:1,fit:1,bx:0,by:0,hx:0,hy:0,moved:false};   // zoom del jugador · fit = escala que encaja el tablero · (bx,by) = posición en pantalla del centro del tablero
+/* main.js · arranque: canvas, cámara (escala fija + seguimiento + arrastre), creador de personaje, UI y bucle de render */
+const cv=$('#c'),ctx=cv.getContext('2d');let VW=800,VH=600,Z=CFG.scale,dpr=1,OX=0,OY=0;
+/* Cámara: el mapa SIEMPRE se dibuja a la misma escala (Z). Lo que se mueve es la cámara: sigue a tu personaje (o al que está en turno) y no deja huecos fuera del mapa;
+   si el mapa cabe en pantalla queda centrado. (px,py) = desplazamiento manual en unidades del mundo (arrastrando); (cx,cy) = centro actual de la cámara. */
+const V={px:0,py:0,cx:null,cy:null,hy:300,av:400,moved:false,snap:true};
 const camC=()=>{const A=G.arena;return A?[A.cx,(A.box.y0-CFG.spriteH+A.box.y1)/2]:[0,176]};   // centro del tablero (incluye el hueco de los personajes por encima)
 
-/* ---------- vista: ajuste, zoom y arrastre (cada mapa tiene su tamaño: se encaja solo) ---------- */
+/* ---------- vista: tamaño del lienzo, cámara y arrastre ---------- */
 function rs(){dpr=devicePixelRatio||1;const r=cv.getBoundingClientRect();VW=r.width;VH=r.height;cv.width=VW*dpr;cv.height=VH*dpr;
- const hudH=(typeof LAY!=='undefined'&&LAY.moved('#hud'))?0:($('#hud').offsetHeight||110),top=G.hub?30:64,bot=G.hub?30:hudH+22,av=Math.max(120,VH-top-bot),sH=CFG.spriteH,A=G.arena;
+ const hudH=(typeof LAY!=='undefined'&&LAY.moved('#hud'))?0:($('#hud').offsetHeight||110),top=G.hub?30:64,bot=G.hub?30:hudH+22;
  document.documentElement.style.setProperty('--hud',hudH+'px');
- const bw=A?A.box.x1-A.box.x0+40:12*64+30,bh=A?A.box.y1-A.box.y0+sH+34:12*32+sH+40;
- V.fit=Math.min((VW-24)/bw,av/bh,1.8);                                       // el tablero entero cabe sobre el HUD
- V.hx=VW/2;V.hy=top+av/2;                                                    // posición "casa" (centrada)
- if(!V.moved){V.bx=V.hx;V.by=V.hy}apply()}
-function apply(){V.bx=clamp(V.bx,0,VW);V.by=clamp(V.by,0,VH);Z=V.fit*V.zoom;const[cx,cy]=camC();OX=V.bx-cx*Z;OY=V.by-cy*Z;$('#zlbl').textContent=Math.round(V.zoom*100)+'%'}
-function zoomAt(f,ax,ay){const nz=clamp(V.zoom*f,CFG.zoomMin,CFG.zoomMax),r=nz/V.zoom;V.bx=ax-(ax-V.bx)*r;V.by=ay-(ay-V.by)*r;V.zoom=nz;V.moved=true;apply()}
-function fitView(){V.zoom=1;V.moved=false;V.bx=V.hx;V.by=V.hy;apply()}
+ V.av=Math.max(120,VH-top-bot);V.hy=top+V.av/2;V.snap=true;apply()}          // zona libre de la pantalla: aquí se centra la cámara (la escala NO cambia)
+/* a dónde mira la cámara: tu personaje en el mundo · el personaje en turno en combate · el centro del tablero si no hay a quién seguir */
+function camTarget(){const A=G.arena,[bx,by]=camC();if(!A)return[bx,by];let tx=bx,ty=by;const f=G.hub?G.me:(G.cur||G.me);
+ if(f&&(G.hub||G.cur)){const[fx,fy]=P(f.px,f.py);tx=fx;ty=fy-CFG.spriteH/2}
+ tx+=V.px;ty+=V.py;
+ const hw=VW/2/Z,hh=V.av/2/Z,x0=A.box.x0-20,x1=A.box.x1+20,y0=A.box.y0-CFG.spriteH-12,y1=A.box.y1+22;     // límites del mapa
+ tx=x1-x0<=2*hw?(x0+x1)/2:clamp(tx,x0+hw,x1-hw);ty=y1-y0<=2*hh?(y0+y1)/2:clamp(ty,y0+hh,y1-hh);return[tx,ty]}
+function camStep(dt){const[tx,ty]=camTarget();if(V.cx==null||V.snap||!dt){V.cx=tx;V.cy=ty;V.snap=false}else{const k=1-Math.exp(-dt*7);V.cx+=(tx-V.cx)*k;V.cy+=(ty-V.cy)*k}
+ OX=Math.round((VW/2-V.cx*Z)*dpr)/dpr;OY=Math.round((V.hy-V.cy*Z)*dpr)/dpr}
+function apply(){Z=CFG.scale;camStep(0)}
+function fitView(){V.px=V.py=0;V.moved=false;V.snap=true;apply()}                 // recentrar la cámara en tu personaje / en el tablero
 addEventListener('resize',rs);new ResizeObserver(()=>rs()).observe($('#hud'));   // el HUD cambia de alto al crear los botones de hechizo
-$('#zin').onclick=()=>zoomAt(1.25,VW/2,VH/2);$('#zout').onclick=()=>zoomAt(1/1.25,VW/2,VH/2);$('#zfit').onclick=fitView;
-cv.addEventListener('wheel',e=>{e.preventDefault();zoomAt(Math.exp(-e.deltaY*.0015),e.offsetX,e.offsetY)},{passive:false});
+$('#zfit').onclick=fitView;
 
 const tile=(mx,my)=>{const a=(mx-OX)/Z/32,b=(my-OY)/Z/16;return[Math.round((a+b)/2),Math.round((b-a)/2)]};
-const ptr=new Map();let pinched=false,pd=0;                 // punteros activos (1 = clic/arrastre, 2 = pellizco)
-const mid=()=>{const p=[...ptr.values()];return[(p[0].x+p[1].x)/2,(p[0].y+p[1].y)/2,Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)]};
+const ptr=new Map();let pinched=false;                      // punteros activos (1 = clic/arrastre)
 cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.offsetX,y:e.offsetY,sx:e.offsetX,sy:e.offsetY,drag:false});
- if(ptr.size===2){pinched=true;pd=mid()[2]}});
+ if(ptr.size===2)pinched=true});
 cv.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'||!ptr.size)G.hover=tile(e.offsetX,e.offsetY);const p=ptr.get(e.pointerId);if(!p)return;
  const dx=e.offsetX-p.x,dy=e.offsetY-p.y;p.x=e.offsetX;p.y=e.offsetY;
- if(ptr.size===2){const[mx,my,d]=mid();zoomAt(d/pd,mx,my);pd=d;V.bx+=dx/2;V.by+=dy/2;apply();return}
- if(!p.drag&&Math.hypot(p.x-p.sx,p.y-p.sy)>12)p.drag=true;if(p.drag&&!pinched){V.bx+=dx;V.by+=dy;V.moved=true;apply()}});
+ if(ptr.size===2)return;                                                     // dos dedos: nada (no hay zoom)
+ if(!p.drag&&Math.hypot(p.x-p.sx,p.y-p.sy)>12)p.drag=true;if(p.drag&&!pinched){V.px-=dx/Z;V.py-=dy/Z;V.moved=true}});   // arrastrar = mover la cámara por el mapa
 const endPtr=e=>{const p=ptr.get(e.pointerId);if(!p)return;ptr.delete(e.pointerId);
- if(e.type==='pointerup'&&!p.drag&&!pinched&&!ptr.size&&$('#create').hidden&&$('#pick').hidden)click(...tile(e.offsetX,e.offsetY));
+ if(e.type==='pointerup'&&!p.drag&&!pinched&&!ptr.size&&$('#create').hidden&&$('#pick').hidden){if(!(G.hub&&World.hit(e.offsetX,e.offsetY))){if(G.hub){V.px=V.py=0;V.moved=false}click(...tile(e.offsetX,e.offsetY))}}
  if(!ptr.size)pinched=false};
 cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
 cv.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')G.hover=null});
 
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||overlayOpen())return;
+ if(Ready.on){if(e.code==='Space'){e.preventDefault();Ready.me()}return}
  if(G.hub&&(e.key==='e'||e.key==='E'||e.key==='Enter')&&Hub.near){Hub.open(Hub.near);return}
  if((e.key==='Enter'||e.key==='/')&&!overlay()){e.preventDefault();Chat.focus(e.key==='/'?'/':'');return}if(!G.hub&&e.key>='1'&&e.key<='9')UI.key(+e.key-1);if(e.code==='Space'){e.preventDefault();endTurn()}
  if(e.key==='Tab'){e.preventDefault();UI.bt=UI.bt==='sp'?'it':'sp';UI.slots()}
- if(e.key==='+'||e.key==='=')zoomAt(1.15,VW/2,VH/2);else if(e.key==='-'||e.key==='_')zoomAt(1/1.15,VW/2,VH/2);else if(e.key==='0')fitView()});
+ if(e.key==='0')fitView()});
 /* ---------- CUENTA: personajes guardados en este navegador (máx. PROG.maxChars) · carrusel para elegir y creador de personaje ---------- */
 let PJ=PG.load(),SAVED=!!PJ;if(!PJ)PJ=PG.newBuild('Jugador','yopuka','m');       // build temporal hasta elegir/crear personaje (el combate de fondo)
 const cleanName=s=>s.replace(/[^\p{L}\p{N} _.\-]/gu,'').replace(/\s+/g,' ').trim().slice(0,14);
@@ -64,16 +69,16 @@ function pkGo(i,now){PK=Math.max(0,Math.min(pkN()-1,i));const tr=$('#pktrack'),c
  $('#pkprev').disabled=PK===0;$('#pknext').disabled=PK>=pkN()-1;
  const ch=CH[PK],C=ch&&Registry.classes[ch.cls];$('#pkdel').hidden=$('#pkedit').hidden=!ch;$('#pkplay').textContent=ch?'▶ Jugar':'＋ Crear personaje';
  $('#pkinfo').innerHTML=ch?`<h3>${esc(ch.name)}</h3><div>${C.ico} ${esc(C.n)} · Nivel ${ch.lvl} · ${esc(C.role)}</div><div class="sm">🏆 ${ch.wins} victorias · ☠ ${ch.losses} derrotas</div>`:`<h3>Nuevo personaje</h3><div class="sm">Elige clase, cara, peinado y colores (${CH.length} de ${PROG.maxChars} ranuras usadas)</div>`}
-function openPick(){CH=PG.all();if(!CH.length)return openCreator(null);const i=CH.findIndex(c=>c.id===PG.sel());PK=i<0?0:i;$('#create').hidden=true;$('#pick').hidden=false;G.paused=true;pkBuild();figOn()}
+function openPick(){World.pause();CH=PG.all();if(!CH.length)return openCreator(null);const i=CH.findIndex(c=>c.id===PG.sel());PK=i<0?0:i;$('#create').hidden=true;$('#pick').hidden=false;G.paused=true;if(typeof GMenu!=='undefined')GMenu.sync();pkBuild();figOn()}
 function closePick(){$('#pick').hidden=true;G.paused=false}
-function pkPlay(){const ch=CH[PK];if(!ch)return openCreator(null);PJ=ch;SAVED=true;PG.setSel(ch.id);closePick();Hub.enter()}
+function pkPlay(){const ch=CH[PK];if(!ch)return openCreator(null);PJ=ch;SAVED=true;PG.setSel(ch.id);closePick();World.armed=true;Hub.enter()}
 $('#pkprev').onclick=()=>pkGo(PK-1);$('#pknext').onclick=()=>pkGo(PK+1);$('#pkplay').onclick=pkPlay;$('#pkedit').onclick=()=>CH[PK]&&openCreator(CH[PK]);
 $('#pkdel').onclick=()=>{const ch=CH[PK];if(!ch||!confirm('¿Borrar a '+ch.name+' (Nv '+ch.lvl+')? No se puede deshacer.'))return;PG.del(ch.id);if(PJ.id===ch.id){SAVED=false;PJ=PG.newBuild('Jugador','yopuka','m')}CH=PG.all();if(!CH.length)return openCreator(null);PK=Math.min(PK,pkN()-1);pkBuild()};
 $('#pktrack').addEventListener('click',e=>{if(pkMoved)return;const d=e.target.closest('.pk-card');if(!d)return;const i=+d.dataset.i;if(i===PK)pkPlay();else pkGo(i)});
 $('#pkview').addEventListener('pointerdown',e=>{pkDrag=e.clientX;pkMoved=false});
 addEventListener('pointerup',e=>{if(pkDrag==null)return;const dx=e.clientX-pkDrag;pkDrag=null;if(Math.abs(dx)>45){pkMoved=true;pkGo(PK+(dx<0?1:-1));setTimeout(()=>pkMoved=false,60)}});
 $('#pkview').addEventListener('wheel',e=>{e.preventDefault();pkGo(PK+((e.deltaX||e.deltaY)>0?1:-1))},{passive:false});
-addEventListener('keydown',e=>{if($('#pick').hidden)return;if(e.key==='ArrowLeft')pkGo(PK-1);else if(e.key==='ArrowRight')pkGo(PK+1);else if(e.key==='Enter')pkPlay()});
+addEventListener('keydown',e=>{if($('#pick').hidden||!$('#gmenu').hidden)return;if(e.key==='ArrowLeft')pkGo(PK-1);else if(e.key==='ArrowRight')pkGo(PK+1);else if(e.key==='Enter')pkPlay()});
 
 /* ---- creador (personaje nuevo) / apariencia (editar uno existente: la clase no se puede cambiar) ---- */
 let CR=null;
@@ -91,19 +96,19 @@ function crRender(){const{cls,sex,look,tab}=CR,C=Registry.classes[cls],P=$('#crp
   const box=document.createElement('div');box.id='cards';for(const id in Registry.classes){const c=Registry.classes[id],b=document.createElement('button');b.type='button';b.className='card'+(id===cls?' sel':'')+(CR.edit&&id!==cls?' dis':'');
    const im=new Image();im.alt='';im.onerror=()=>{im.remove();const ic=document.createElement('span');ic.className='ico';ic.textContent=c.ico;b.prepend(ic)};im.src='assets/characters/'+id+'_'+sex+'.png';b.appendChild(im);
    b.insertAdjacentHTML('beforeend',`<b>${esc(c.n)}</b><small>${esc(c.role)}</small>`);b.onclick=()=>{CR.cls=id;crRender()};box.appendChild(b)}P.appendChild(box)}
- else if(tab==='face'){const sec=(t,n,names,key)=>{const h=document.createElement('h4');h.textContent=t;P.appendChild(h);const g=document.createElement('div');g.className='opts';
-   for(let i=0;i<n;i++){const cv=mkc('',56,56);LOOK.portrait(cv,{...LK,[key]:i},sex,cls);g.appendChild(crOpt(cv,names[i],LK[key]===i,()=>set(key,i)))}P.appendChild(g)};
-  sec('Estilo de cara',LOOK.faceN,LOOK.faceNames,'f');sec('Peinado',LOOK.hairN,LOOK.hairNames,'h')}
+else if(tab==='face'){const h=document.createElement('h4');h.textContent='Cara · '+C.n+' '+(sex==='f'?'femenina':'masculina');P.appendChild(h);const g=document.createElement('div');g.className='opts';P.appendChild(g);
+  const n=document.createElement('div');n.className='cr-note';P.appendChild(n);const av=CR.av=[];let pend=LOOK.faceN;       // caras que existen (PNG en assets/faces/): solo se muestran las que cargan
+  const fin=()=>{if(--pend===0)n.textContent=av.length?'Elige la cara de tu personaje. Los PNG están en assets/faces/.':'Aún no hay caras para esta clase. Sube tus PNG a assets/faces/'+cls+'_'+sex+'_1.png (y _2, _3…). Mientras tanto se ve el icono de la clase.'};
+  for(let i=0;i<LOOK.faceN;i++){const im=new Image();im.alt='';const b=crOpt(im,'Cara '+(i+1),LK.f===i,()=>set('f',i));b.hidden=true;g.appendChild(b);im.onload=()=>{b.hidden=false;av.push(i);fin()};im.onerror=()=>{b.remove();fin()};im.src=LOOK.faceSrc(cls,sex,i)}}
  else{const row=(t,list,key,css,orig)=>{const h=document.createElement('h4');h.textContent=t;P.appendChild(h);const g=document.createElement('div');g.className='sws';
    list.forEach((x,i)=>g.appendChild(crSw(css(x,i),typeof x==='string'?'':x.n||'',LK[key]===i,()=>set(key,i),orig&&orig(i))));P.appendChild(g)};
-  row('Piel',LOOK.skin,'s',x=>x);row('Pelo',LOOK.hair,'hc',x=>x);row('Ojos',LOOK.eyes,'e',x=>x);
   row('Atuendo y anillo',LOOK.out,'c',x=>x.sw||(x.h!=null?'hsl('+x.h+',68%,50%)':''),i=>i===0);
-  const n=document.createElement('div');n.className='cr-note';n.textContent='El atuendo recolorea las zonas azules/verdes/violetas del personaje y pinta el anillo que lleva bajo los pies en combate. Piel, pelo, ojos, cara y peinado se ven en su retrato (carrusel, cabecera y resultados).';P.appendChild(n)}}
+  const n=document.createElement('div');n.className='cr-note';n.textContent='El atuendo recolorea las zonas azules/verdes/violetas del personaje y pinta el anillo que lleva bajo los pies en combate. La cara se elige en la pestaña «Cara» (son los PNG de assets/faces/).';P.appendChild(n)}}
 function crDone(){const nm=cleanName($('#nm').value)||'Jugador',look=LOOK.fix(CR.look);
  if(CR.edit){const ch=CR.edit;Object.assign(ch,{name:nm,sex:CR.sex,look});PG.save(ch);if(PJ.id===ch.id)Object.assign(PJ,{name:nm,sex:CR.sex,look});UI.head();CR=null;$('#create').hidden=true;openPick();return}
- const b=PG.newBuild(nm,CR.cls,CR.sex);b.look=look;PG.save(b);PJ=b;SAVED=true;CR=null;$('#create').hidden=true;G.paused=false;Hub.enter()}
-$('#go').onclick=crDone;$('#cancel').onclick=()=>{CR=null;$('#create').hidden=true;openPick()};$('#pj').onclick=openPick;$('#whoP').onclick=openPick;
-$('#crrnd').onclick=()=>{CR.look=LOOK.random();CR.look.c=CR.look.c;crRender()};
+ const b=PG.newBuild(nm,CR.cls,CR.sex);b.look=look;PG.save(b);PJ=b;SAVED=true;CR=null;$('#create').hidden=true;G.paused=false;World.armed=true;Hub.enter()}
+$('#go').onclick=crDone;$('#cancel').onclick=()=>{CR=null;$('#create').hidden=true;openPick()};$('#pj').onclick=()=>askPick();$('#whoP').onclick=()=>askPick();
+$('#crrnd').onclick=()=>{const av=CR.av&&CR.av.length?CR.av:[0];CR.look={f:av[Math.floor(Math.random()*av.length)],c:Math.floor(Math.random()*LOOK.out.length)};crRender()};
 document.querySelectorAll('#crtabs button').forEach(b=>b.onclick=()=>{CR.tab=b.dataset.tab;crRender()});
 $('#nm').addEventListener('keydown',e=>{if(e.key==='Enter')crDone()});
 
@@ -219,13 +224,16 @@ const UI={msg:t=>$('#msg').textContent=t,
   if(R.left)h+='<div class="rsub">Abandonar cuenta como derrota: sin botín.</div>';
   if(!R.draw)h+=`<div class="rsub">Ganó ${esc(R.sides[W].map(e=>e.n).join(', '))} · perdió ${esc(R.sides[1-W].map(e=>e.n).join(', '))}</div>`;
   h+='<div class="rcols">'+card(R.sides[0],0)+card(R.sides[1],1)+'</div>';
-  if(!R.draw)h+=`<div class="rxp"><div>+${R.xp} XP${R.xpBonus>0?` <span class="rup">(🏅 +${R.xpBonus})</span>`:''} · <span class="rup">💰 +${(R.kamas||0).toLocaleString('es')} kamas${R.kamasBonus>0?` (🏅 +${R.kamasBonus})`:''}</span>${R.up?` · <span class="rup">¡Nivel ${R.lvl}!</span> (+${R.cap} capital, +${R.spp} pts de hechizo)`:''}</div><div class="xp"><i style="width:${R.max?100:100*R.xpNow/R.xpNeed}%"></i><span>${R.max?'Nivel máximo':'Nv '+R.lvl+' · '+R.xpNow+' / '+R.xpNeed+' XP'}</span></div>`
+  if(!R.draw&&R.duel)h+='<div class="rxp"><div>⚔ Duelo entre jugadores: <b>no se gana XP, kamas ni botín</b>.</div></div>';
+  else if(!R.draw)h+=`<div class="rxp"><div>+${R.xp} XP${R.xpBonus>0?` <span class="rup">(🏅 +${R.xpBonus})</span>`:''} · <span class="rup">💰 +${(R.kamas||0).toLocaleString('es')} kamas${R.kamasBonus>0?` (🏅 +${R.kamasBonus})`:''}</span>${R.up?` · <span class="rup">¡Nivel ${R.lvl}!</span> (+${R.cap} capital, +${R.spp} pts de hechizo)`:''}</div><div class="xp"><i style="width:${R.max?100:100*R.xpNow/R.xpNeed}%"></i><span>${R.max?'Nivel máximo':'Nv '+R.lvl+' · '+R.xpNow+' / '+R.xpNeed+' XP'}</span></div>`
    +R.unl.map(n=>`<div class="rup">✨ Hechizo desbloqueado: ${esc(n)}</div>`).join('')
    +(R.chal&&R.chal.length?'<div class="rchal"><b>🏅 Retos</b>'+R.chal.map(x=>`<span class="${x.ok?'ok':'bad'}" title="${esc(x.d)}">${x.ok?'✔':'✖'} ${x.ico} ${esc(x.n)} <em>${'★'.repeat(x.stars)}</em></span>`).join('')+'</div>':'')
    +(R.sales&&R.sales.length?'<div class="rloot"><b>📋 Tu puesto</b>'+R.sales.map(x=>`<span>${esc(x)}</span>`).join('')+'</div>':'')
    +(R.loot&&R.loot.length?'<div class="rloot"><b>🎁 Botín</b>'+R.loot.map(x=>`<span class="${x.set?'set':''}">${x.set?'🎽 ':''}${esc(x.ico+' '+x.n)}${x.q>1?' ×'+x.q:''}</span>`).join('')+'</div>':'')+'</div>';
   if(R.dun)h+=`<div class="rsub">🏰 ${esc(R.dun.n)} · sala ${R.dun.room+1}/${R.dun.rooms}${R.won&&R.dun.room===R.dun.rooms-1?' · 🏆 ¡MAZMORRA COMPLETADA!':''}</div>`;
-  h+=`<div class="rf">⏳ Duración ${mm(R.dur)} · 🔁 ${R.turns} turno${R.turns===1?'':'s'} tuyo${R.turns===1?'':'s'}</div><div class="rrow">${R.dun&&R.won&&R.dun.room<R.dun.rooms-1?'<button id="rnext">➡ Siguiente sala ('+(R.dun.room+2)+'/'+R.dun.rooms+')</button>':''}<button id="rhub">🏛 Sala de espera</button><button id="rbegin">⚔ Combatir de nuevo</button><button id="rview">🗺 Ver tablero</button><button id="rpj">📈 Personaje</button></div></div>`;
+  if(R.pl&&R.pl.length&&typeof Fr!=='undefined')h+='<div class="rpl"><b>👥 Jugadores del combate</b>'+R.pl.map(Fr.resRow).join('')+'</div>';
+  if(R.mode==='pvp')h+=R.duel?'<div class="rsub">⚔ Un nuevo duelo solo empieza si tu rival acepta tu desafío.</div>':'<div class="rsub">🔍 Partida de Coliseo terminada. Para otra, entra de nuevo en la fila de espera (búsqueda nueva).</div>';
+  h+=`<div class="rf">⏳ Duración ${mm(R.dur)} · 🔁 ${R.turns} turno${R.turns===1?'':'s'} tuyo${R.turns===1?'':'s'}</div><div class="rrow">${R.dun&&R.won&&R.dun.room<R.dun.rooms-1?(R.coop&&R.coop.host!==R.coop.me?'<span class="rsub">⏳ Esperando a que '+esc(R.coop.hn)+' abra la siguiente sala…</span>':'<button id="rnext">➡ Siguiente sala ('+(R.dun.room+2)+'/'+R.dun.rooms+')</button>'):''}<button id="rhub">🏛 Sala de espera</button>${R.mode==='pvp'?(R.duel?'<button id="rrematch">⚔ Desafiar de nuevo</button>':'<button id="rqueue">🔍 Nueva búsqueda (Coliseo)</button>'):R.mode==='mob'||R.duel?'':'<button id="rbegin">⚔ Combatir de nuevo</button>'}<button id="rpj">📈 Personaje</button></div></div>`;
   el.innerHTML=h;el.hidden=false},
  /* tarjeta grande del personaje en turno (o del que señales en la lista de turnos): retrato, vida, PA/PM y una tarjeta por cada estado con quién lo aplicó */
  card(){const el=$('#tcard'),id=UI.hov!=null?UI.hov:UI.foc,e=(id!=null&&byId(id))||G.cur;if(!e||!G.me){el.hidden=true;return}el.hidden=false;
@@ -243,42 +251,61 @@ const UI={msg:t=>$('#msg').textContent=t,
  sheetRefresh(){if(!$('#sheet').hidden)renderSheet()}};
 const WXN={none:'☀️ Despejado',wind:'🍃 Viento',rain:'🌧 Lluvia'};
 const mapInfo=()=>{const A=G.arena;$('#mapi').textContent='🗺 '+A.n+' · '+(WXN[G.weather]||WXN.none);$('#mapi').title='Arena '+A.w+'×'+A.h+' ('+A.walk+' casillas) · la arena y el clima se eligen solos en cada combate'};
-Net.onAct=a=>{G.q=G.q.then(()=>exec(a))};
+Net.onAct=a=>{if(a&&a.k==='rdy'){Ready.mark(a.u);return}G.q=G.q.then(()=>exec(a))};
 function begin(){UI.foc=UI.hov=null;const m=$('#mode').value;if(m==='pvp')return Coli.open();
  if(Coli.busy()){$('#mode').value='pvp';UI.msg('🔍 Estás buscando partida en el Coliseo. Cancela la búsqueda (⚔️ Coliseo) para combatir en otro modo.');return}
  Net.leave();Hub.leave();Dun.run=null;
  startBattle(Maps.pick(G.arena&&G.arena.id),{mode:m,me:PJ,allies:Party.builds()});mapInfo();rs();fitView();            // arena y clima AUTOMÁTICOS: distintos en cada combate
  UI.msg(m==='mob'&&G.noMobs?'Aún no hay monstruos: añádelos en js/data/monsters/monstruos.js':'Toca una celda azul para moverte · hechizos 1-9 · espacio = fin de turno · 🚪 Salir = abandonar · 📈 = tu personaje');UI.hud()}
 /* ---------- 🚪 Salir del combate: aviso con lo que se pierde según el modo (texto en leaveInfo, combat.js) ---------- */
-const Leave={open(){if(G.hub||G.over||!G.me||!$('#leavebox').hidden)return;const i=leaveInfo();
+const Leave={then:null,open(then){if(G.hub||G.over||!G.me||!$('#leavebox').hidden)return;Leave.then=typeof then==='function'?then:null;const i=leaveInfo();
   $('#leavebox').innerHTML=`<div class="lv"><h3>🚪 ${i.t}</h3><p>${i.d}</p><div class="lvr"><button id="lvno" type="button">↩ Seguir luchando</button><button id="lvyes" type="button" class="bad">${i.b}</button></div></div>`;$('#leavebox').hidden=false;setTimeout(()=>{const n=$('#lvno');n&&n.focus()},30)},
- close(){$('#leavebox').hidden=true}};
-$('#leavebox').addEventListener('click',e=>{const t=e.target.closest('button');if(t&&t.id==='lvyes'){Leave.close();forfeit()}else if((t&&t.id==='lvno')||e.target===$('#leavebox'))Leave.close()});
+ close(){$('#leavebox').hidden=true;Leave.then=null}};
+/* ir al selector de personajes: si estás en pleno combate avisa antes (abandonar = derrota) y solo sale si confirmas */
+const askPick=()=>{if(!G.hub&&!G.over&&G.mode!=='hub'&&G.me&&$('#pick').hidden&&$('#create').hidden){Leave.open(()=>{$('#result').hidden=true;openPick()});return}openPick()};
+$('#leavebox').addEventListener('click',e=>{const t=e.target.closest('button');if(t&&t.id==='lvyes'){const f=Leave.then;Leave.close();Promise.resolve(forfeit()).then(()=>f&&f())}else if((t&&t.id==='lvno')||e.target===$('#leavebox'))Leave.close()});
 $('#leave').onclick=()=>Leave.open();
 addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('#leavebox').hidden){Leave.close();return}
  const ae=document.activeElement,typing=ae&&/INPUT|SELECT|TEXTAREA/.test(ae.tagName)&&ae.offsetParent!==null;      // escribiendo en el chat: Esc no abre el aviso
  if(!G.hub&&!G.over&&!overlayOpen()&&!typing)Leave.open()});
-$('#result').addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;if(t.id==='rnext'){$('#result').hidden=true;Dun.next()}else if(t.id==='rhub'){$('#result').hidden=true;Hub.enter()}else if(t.id==='rbegin'){$('#result').hidden=true;begin()}else if(t.id==='rview')$('#result').hidden=true;else if(t.id==='rpj'){$('#result').hidden=true;renderSheet();$('#sheet').hidden=false}});
+$('#result').addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;if(t.id==='rnext'){$('#result').hidden=true;Dun.next()}else if(t.id==='rhub'){$('#result').hidden=true;Hub.enter()}else if(t.id==='rbegin'){$('#result').hidden=true;begin()}else if(t.id==='rqueue'){$('#result').hidden=true;Coli.open()}else if(t.id==='rrematch'){const o=(G.res&&G.res.pl||[]).find(x=>!x.ally);$('#result').hidden=true;Hub.enter();if(o){const m=Soc.challenge(o.uid,o.n);UI.msg(m||'⚔ Desafío enviado a '+o.n+'. Esperando su respuesta…')}}else if(t.id==='rpj'){$('#result').hidden=true;renderSheet();$('#sheet').hidden=false}});
 $('#turns').addEventListener('mouseover',e=>{const t=e.target.closest('.tr');UI.hov=t?+t.dataset.id:null;UI.card()});$('#turns').addEventListener('mouseleave',()=>{UI.hov=null;UI.card()});
 $('#turns').addEventListener('click',e=>{const t=e.target.closest('.tr');if(!t)return;const i=+t.dataset.id;UI.hov=null;UI.foc=UI.foc===i?null:i;UI.card()});   // clic = fijar la tarjeta en ese personaje (otro clic = volver al que está en turno)
 $('#start').onclick=begin;$('#end').onclick=endTurn;$('#mode').onchange=()=>{if(!G.hub&&$('#mode').value!=='pvp')begin()};$('#hubb').onclick=()=>{if(G.hub)return;if(!G.over&&G.mode!=='hub'){Leave.open();return}$('#result').hidden=true;Hub.enter()};$('#ptb').onclick=()=>openParty();$('#dunb').onclick=()=>{if(!G.hub&&!G.over){UI.msg('🏰 Las mazmorras se eligen desde la sala de espera (botón 🏛 Sala)');return}openDung()};$('#navt').onclick=()=>$('#nav').classList.toggle('c');if(innerWidth<=900)$('#nav').classList.add('c');$('#hubact').onclick=()=>Hub.open($('#hubact').dataset.c);
 document.querySelectorAll('#btabs button').forEach(b=>b.onclick=()=>{UI.bt=b.dataset.bt;UI.slots();UI.hud()});
 $('#logb').onclick=()=>Chat.toggle();
 
+/* ---------- previsión en combate: PM que gastarás al moverte y daño/cura (en rango mín–máx) del hechizo elegido sobre cada objetivo ---------- */
+function drawPreview(g,pv,pm,eh,pmn){g.save();g.textAlign='center';g.lineJoin='round';g.strokeStyle='#000';
+ const txt=(t,x,y,col,px)=>{g.font='bold '+px+'px Trebuchet MS,sans-serif';g.lineWidth=4;g.fillStyle=col;g.strokeText(t,x,y);g.fillText(t,x,y)},rg=(a,b)=>a===b?''+a:a+'–'+b;
+ if(pm){const[cx,cy]=P(pm.x,pm.y);txt('👟 '+pm.cost+' PM',cx,cy-6,'#d4ecff',16);txt('quedan '+pm.left,cx,cy+9,'#9fd0ff',11)}
+ for(const o of pv||[]){const e=o.e,[cx,cy]=P(e.px,e.py),h=eh(e),bx=cx-21,by=cy+5-h;
+  if(o.hi>0){const w=x=>42*x/e.mhp;g.fillStyle='rgba(255,205,70,.95)';g.fillRect(bx+w(e.hp-o.hi),by,w(o.hi),4);g.fillStyle='#ff2d2d';g.fillRect(bx+w(e.hp-o.lo),by,w(o.lo),4)}       // franja en la barra de vida: amarillo = máximo · rojo = mínimo seguro
+  if(o.hh>0){g.fillStyle='rgba(120,255,130,.95)';g.fillRect(bx+42*e.hp/e.mhp,by,42*o.hh/e.mhp,4)}
+  let y=cy-h-21;
+  if(o.hi>0){txt('− '+rg(o.lo,o.hi)+(o.sure?' ☠':o.kill?' ☠?':''),cx,y-17,'#ff6a5a',17);txt('Vida '+rg(e.hp-o.hi,e.hp-o.lo)+' / '+e.mhp,cx,y,'#fff',11);y-=36}
+  if(o.hh>0){txt('+ '+rg(o.hl,o.hh)+' vida',cx,y-3,'#8dff9a',15);y-=20}
+  if(o.dot)txt('☠ '+rg(o.dot.lo,o.dot.hi)+' por turno × '+o.dot.tn,cx,y-3,'#d9a6ff',12)}
+ g.restore()}
 /* ---------- bucle de render ---------- */
 let last=performance.now();
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;G.t=now/1000;tick(dt);if(G.hub)Hub.tick(dt);UI.tmr();const A=G.arena;
  for(const e of G.ents){e.atk=Math.max(0,e.atk-dt/.5);e.hurt=Math.max(0,e.hurt-dt/.4);e.cast=Math.max(0,e.cast-dt/.6);
   if(!e.path.length)continue;const[tx,ty]=e.path[0],dx=tx-e.px,dy=ty-e.py,d=Math.hypot(dx,dy),s=5*dt;
   if(d<=s){e.px=e.x=tx;e.py=e.y=ty;e.path.shift();if(!e.path.length&&!G.hub)UI.hud()}else{e.px+=dx/d*s;e.py+=dy/d*s}}
+ if(V.lc!==G.cur){V.lc=G.cur;if(!G.hub){V.px=V.py=0;V.moved=false}}camStep(dt);
  ctx.setTransform(dpr,0,0,dpr,0,0);drawBg(ctx,A,G.t,VW,VH);
  ctx.setTransform(dpr*Z,0,0,dpr*Z,dpr*OX,dpr*OY);
- const hl={},p=G.me,ts=Math.min(1.8,Math.max(1,.95/Z)),eh=e=>entH(e)+14;       // ts: el texto crece un poco al alejar el zoom para seguir legible
+ const hl={},p=G.me,ts=1,eh=e=>entH(e)+14;let pv=null,pm=null;const pmn=[];       // ts: tamaño del texto (la escala es fija)
  if(G.cur===p&&!G.busy&&!G.over&&!p.path.length){
-  if(G.sel!=null){for(const[x,y]of Rules.range(G,p,Registry.spells[p.sp[G.sel].id]))hl[x+','+y]='rgba(235,120,40,.5)'}
-  else{const b=bfs(p.x,p.y,p.pm,p);for(const k in b.d)if(b.d[k]>0)hl[k]='rgba(70,130,230,.5)'}}
+  if(G.sel!=null){const c=p.sp[G.sel],sp=Registry.spells[c.id];for(const[x,y]of Rules.range(G,p,sp))hl[x+','+y]='rgba(235,120,40,.5)';
+   if(G.hover&&sp.tg!=='s'&&!Rules.can(G,p,sp,G.hover[0],G.hover[1]))pv=Rules.preview(G,p,sp,c.lv,G.hover[0],G.hover[1])}      // previsión de daño/cura antes de lanzar
+  else{const b=bfs(p.x,p.y,p.pm,p);for(const k in b.d)if(b.d[k]>0){hl[k]='rgba(70,130,230,.5)';0}      // cada casilla alcanzable lleva su coste en PM;
+   if(G.hover){const[hx,hy]=G.hover,k=hx+','+hy;                                                                   // PM que costaría ir a la casilla señalada
+    if(b.d[k]>0){let pa=pathTo(b,hx,hy);const ti=pa.findIndex(([x,y])=>G.objs.some(o=>o.kind==='trap'&&o.x===x&&o.y===y));if(ti>=0)pa=pa.slice(0,ti+1);pa.forEach(([x,y])=>hl[x+','+y]='rgba(130,190,255,.8)');const L=pa[pa.length-1];pm={x:L[0],y:L[1],cost:pa.length,left:p.pm-pa.length}}
+    }}}
  if(G.hover&&!blocked(...G.hover))hl[G.hover.join()]=hl[G.hover.join()]||'rgba(255,255,255,.22)';
- drawArt(ctx,A);drawGround(ctx,A,hl,G.t);for(const o of G.objs)objGround(ctx,o,G.t,G.me);
+ drawArt(ctx,A);drawGround(ctx,A,hl,G.t);if(G.hub)World.deco(ctx,G.t);for(const o of G.objs)objGround(ctx,o,G.t,G.me);
  if(!A._ob){A._ob=[];eachCell(A,(x,y,v,c)=>{if(c&&c!=='o'&&c!=='~')A._ob.push([x,y])})}
  const items=A._ob.map(([x,y])=>({k:x+y,f:()=>drawObs(ctx,A,x,y,G.t)}));
  for(const o of G.objs)items.push({k:o.x+o.y-.2,f:()=>objDraw(ctx,o,G.t,G.me)});
@@ -286,7 +313,7 @@ function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;G.t=now/1000
   if(G.cur===e){ctx.strokeStyle='#ffd84a';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,2,24,11,0,0,7);ctx.stroke()}
   if(G.hub)Hub.plate(ctx,e,h,ts);else{ctx.font='bold '+13*ts+'px Trebuchet MS,sans-serif';ctx.textAlign='center';ctx.lineJoin='round';ctx.lineWidth=3;ctx.strokeStyle='#000';ctx.fillStyle='#fff';ctx.strokeText(e.n,0,-h-2*ts);ctx.fillText(e.n,0,-h-2*ts);
   ctx.fillStyle='#000';ctx.fillRect(-22,4-h,44,6);ctx.fillStyle=e.team===G.me.team?'#6dbb3c':'#d23b34';ctx.fillRect(-21,5-h,42*e.hp/e.mhp,4);}ctx.restore()}});
- items.sort((a,b)=>a.k-b.k).forEach(i=>i.f());drawBooms(ctx,G.bm,dt);
+ items.sort((a,b)=>a.k-b.k).forEach(i=>i.f());drawBooms(ctx,G.bm,dt);if(pv||pm||pmn.length)drawPreview(ctx,pv,pm,eh,pmn);
  G.pr=G.pr.filter(q=>(q.t+=dt)<.3);for(const q of G.pr){const f=q.t/.3,[ax,ay]=P(...q.a),[bx,by]=P(...q.b);
   ctx.fillStyle=q.c;ctx.shadowColor=q.c;ctx.shadowBlur=12;ctx.beginPath();ctx.arc(lerp(ax,bx,f),lerp(ay,by,f)-CFG.spriteH*.5,6,0,7);ctx.fill();ctx.shadowBlur=0}
  G.fl=G.fl.filter(f=>(f.t+=dt)<1.1);ctx.font='bold '+22*ts+'px Trebuchet MS,sans-serif';ctx.textAlign='center';

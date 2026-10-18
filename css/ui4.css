@@ -2,7 +2,7 @@
 #layb{background:linear-gradient(#4a4843,#33322e);border:2px solid #111}body.lay-edit #layb{border-color:var(--g1,#9bd54a);color:var(--g1,#9bd54a)}
 /* paneles con posición propia */
 .lay-off{visibility:hidden!important;pointer-events:none!important}body.lay-edit .lay-off{visibility:visible!important;opacity:.35}
-.lay-on.lay-scale:not(#pty){width:max-content!important}
+.lay-on.lay-scale:not(#pty):not(#wmap){width:max-content!important}
 #chat.lay-sized:not(.col) #chl{flex:1 1 0;height:auto!important;min-height:0}
 #chat.lay-on #chl{font-size:calc(12px*var(--k,1))}#chat.lay-on #chf input{font-size:calc(13px*var(--k,1))}
 #chat.lay-on.col{height:auto!important}

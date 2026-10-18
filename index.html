@@ -3,19 +3,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Coliseo · Combates tácticos por turnos</title>
 <meta name="description" content="Coliseo: juego de combate táctico por turnos con 15 clases, mazmorras, oficios y PvP online.">
-<meta name="theme-color" content="#10200a"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/ui2.css"><link rel="stylesheet" href="css/ui3.css"><link rel="stylesheet" href="css/ui4.css"><link rel="stylesheet" href="css/auth.css"></head>
+<meta name="theme-color" content="#10200a"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/ui2.css"><link rel="stylesheet" href="css/ui3.css"><link rel="stylesheet" href="css/ui4.css"><link rel="stylesheet" href="css/ui5.css"><link rel="stylesheet" href="css/ui6.css"><link rel="stylesheet" href="css/auth.css"></head>
 <body>
 <div id="top"><b>⚔️ Coliseo</b>
  <div id="who" title="Tu personaje"><canvas id="whoP" width="34" height="34"></canvas><span id="whoT"></span><div class="xpb"><i id="xpi"></i><span id="xpt"></span></div></div>
  <span id="kam" class="kam" title="Tus kamas"></span><span id="mapi" title="La arena y el clima se eligen solos"></span>
  <select id="mode" title="Modo"><option value="ai">Duelo vs IA</option><option value="mob">Monstruos</option><option value="pvp">PvP online</option></select>
  <button id="start" title="Empezar / reiniciar el combate">Combatir</button>
- <button id="acct" type="button" title="Tu cuenta · pulsa para cerrar sesión" hidden><span id="acctN"></span><i>⎋ Salir</i></button></div>
+ <button id="acct" type="button" title="Menú: salir del juego, cambiar de personaje o de servidor" hidden><span id="acctN"></span><i>☰ Menú</i></button></div>
 <div id="stage"><canvas id="c"></canvas>
  <div id="msg"></div>
  <div id="tcard" hidden></div>
- <div id="zoom"><button id="zin" title="Acercar (+)">＋</button><span id="zlbl">100%</span><button id="zout" title="Alejar (−)">－</button>
-  <button id="zfit" title="Ajustar el tablero (0)">⤢</button><button id="logb" title="Mostrar / ocultar el chat de combate">💬</button></div>
+ <div id="zoom"><button id="zfit" title="Centrar la cámara (0)">🎯</button><button id="logb" title="Mostrar / ocultar el chat de combate">💬</button></div>
  
  <div id="hud">
   <div id="vit"><div id="orb" title="Puntos de vida"><i id="orbf"></i><b>❤</b></div><div id="hpn"><b id="hpc"></b><i id="hpm"></i></div>
@@ -28,8 +27,10 @@
   <form id="chf" autocomplete="off"><select id="chs" title="Canal por el que hablas"></select><input id="chi" maxlength="120" placeholder="Escribe un mensaje…"><button type="submit" title="Enviar">➤</button></form></div>
  <div id="pty" title="Tu equipo"></div>
  <div id="nav"><button id="navt" type="button" title="Menú">☰</button>
-  <button id="hubb" title="Volver a la sala de espera"><span class="ic">🏛</span><small>Sala</small></button>
+  <button id="hubb" title="Volver al mundo"><span class="ic">🏛</span><small>Mundo</small></button>
+  <button id="mapb" title="Mapa del mundo"><span class="ic">🗺</span><small>Mapas</small></button>
   <button id="dunb" title="Mazmorras: elige a dónde ir"><span class="ic">🏰</span><small>Mazmorras</small></button>
+  <button id="frb" title="Amigos: lista, enemigos y chat privado"><span class="ic">🤝</span><small>Amigos</small><i class="dot" hidden></i></button>
   <button id="ptb" title="Equipo / grupo"><span class="ic">👥</span><small>Equipo</small></button>
   <button id="lvl" title="Características e inventario"><span class="ic">🎒</span><small>Personaje</small><i class="dot" hidden></i></button>
   <button id="spb" title="Ventana de hechizos"><span class="ic">✨</span><small>Hechizos</small><i class="dot" hidden></i></button>
@@ -38,11 +39,13 @@
   <button id="pj" title="Cambiar de personaje"><span class="ic">👤</span><small>Personajes</small></button></div>
  <div id="turns"></div>
  <div id="retos" hidden></div>
+ <div id="wmap" hidden></div>
  <div id="layov"></div></div>
 
 <!-- Elegir personaje (carrusel) -->
 <div id="pick" hidden>
  <div class="pk-head"><h2>⚔️ Coliseo</h2><span>Elige tu personaje</span></div>
+ <button id="pksrv" class="pk-srv" type="button" title="Servidor · pulsa para ver las opciones"><span>🌍</span><b id="pksrvn"></b><i>▾</i></button>
  <div class="pk-car"><button id="pkprev" class="pk-ar" title="Anterior (←)">‹</button><div id="pkview"><div id="pktrack"></div></div><button id="pknext" class="pk-ar" title="Siguiente (→)">›</button></div>
  <div id="pkdots"></div><div id="pkinfo"></div>
  <div class="pk-row"><button id="pkdel" title="Borrar este personaje">🗑 Borrar</button><button id="pkedit" title="Cambiar nombre, cara, peinado y colores">🎨 Apariencia</button><button id="pkplay">▶ Jugar</button></div>
@@ -54,8 +57,8 @@
  <div class="cr-body">
   <div class="cr-prev"><canvas id="crfig" width="240" height="280"></canvas><div class="cr-id"><canvas id="crport" width="84" height="84"></canvas>
    <div><input id="nm" maxlength="14" autocomplete="off" spellcheck="false" placeholder="Nombre del personaje"><div id="crinfo"></div></div></div>
-   <button id="crrnd" type="button" title="Cara, peinado y colores al azar">🎲 Aleatorio</button></div>
-  <div class="cr-ctl"><div id="crtabs"><button data-tab="cls" type="button">⚔ Clase</button><button data-tab="face" type="button">🙂 Cara y pelo</button><button data-tab="col" type="button">🎨 Colores</button></div><div id="crpane"></div></div>
+   <button id="crrnd" type="button" title="Cara y colores al azar">🎲 Aleatorio</button></div>
+  <div class="cr-ctl"><div id="crtabs"><button data-tab="cls" type="button">⚔ Clase</button><button data-tab="face" type="button">🙂 Cara</button><button data-tab="col" type="button">🎨 Colores</button></div><div id="crpane"></div></div>
  </div>
  <div class="row"><button id="cancel" type="button">Volver</button><button id="go" type="button">Crear personaje</button></div>
 </div></div>
@@ -70,8 +73,16 @@
 <div id="dung" hidden></div>
 <div id="result" hidden></div>
 <div id="colo" hidden></div>
+<div id="friends" hidden></div>
+<div id="trade" hidden></div>
+<div id="pmenu" hidden></div>
+<div id="gcw" hidden></div><div id="gcs" hidden></div>   <!-- ventanita: un compañero de grupo empezó un combate (js/ui/party.js) -->
+<div id="ready" hidden></div>
+<div id="stoast" hidden></div>
 <div id="mfound" hidden></div>
 <div id="leavebox" hidden></div>
+<div id="worldmap" hidden></div>
+<div id="gmenu" hidden></div>
 <div id="qchip" hidden></div>
 <div id="dock"></div>
 
@@ -152,6 +163,7 @@
 <script type="text/game" src="js/data/classes.js"></script>
 <!-- EQUIPO: motor (js/game/items.js) · catálogo: un archivo por zona/mazmorra en js/data/items/ (añade su <script> aquí abajo) -->
 <script type="text/game" src="js/game/items.js"></script>
+<script type="text/game" src="js/game/instances.js"></script>   <!-- OBJETOS ÚNICOS: cada pieza de equipo es un ejemplar con valores propios dentro de un rango -->
 <script type="text/game" src="js/data/items/base.js"></script>
 <script type="text/game" src="js/data/items/extra.js"></script>   <!-- resistencias por elemento, piezas nuevas y sets Brisa / Pétreo / Celestial -->
 <!-- OFICIOS: motor (js/game/jobs.js) · recetas (js/data/crafts.js) · MERCADO VIVO (js/game/economy.js) -->
@@ -163,7 +175,8 @@
 <script type="text/game" src="js/data/looks.js"></script>
 <!-- MONSTRUOS: se añaden en js/data/monsters/monstruos.js (una línea por monstruo) -->
 <script type="text/game" src="js/data/monsters/monstruos.js"></script>
-<script type="text/game" src="js/data/monsters/zonas_extra.js"></script>   <!-- zonas nuevas + resistencias de los monstruos -->
+<script type="text/game" src="js/data/monsters/zonas_extra.js"></script>
+<script type="text/game" src="js/data/items/tienda.js"></script>   <!-- TIENDA AMPLIADA: 24 piezas por tipo de equipo (nv 1-200), recursos y consumibles del mercadillo -->   <!-- zonas nuevas + resistencias de los monstruos -->
 <!-- ARENAS (1 archivo = 1 mapa dibujado en texto; ver js/data/arenas/_plantilla_arena.txt). Añade su <script> aquí abajo: la arena sale sola al azar -->
 <script type="text/game" src="js/data/arenas/claro.js"></script>
 <script type="text/game" src="js/data/arenas/pradera.js"></script>
@@ -176,6 +189,7 @@
 <script type="text/game" src="js/data/arenas/archipielago.js"></script>
 <script type="text/game" src="js/data/arenas/cueva.js"></script>
 <script type="text/game" src="js/data/arenas/_sala.js"></script>
+<script type="text/game" src="js/data/arenas/mundo.js"></script>   <!-- EL MUNDO: 4×4 mapas (usa las arenas de arriba como base de colores) -->
 <script type="text/game" src="js/game/progress.js"></script>
 <script type="text/game" src="js/render/sprite.js"></script>
 <script type="text/game" src="js/render/weather.js"></script>
@@ -183,10 +197,13 @@
 <script type="text/game" src="js/render/objects.js"></script>
 <script type="text/game" src="js/game/challenges.js"></script>
 <script type="text/game" src="js/net/net.js"></script>
+<script type="text/game" src="js/net/social.js"></script>   <!-- amigos · enemigos · mensajes · desafíos · en línea -->
 <script type="text/game" src="js/ui/chat.js"></script>
 <script type="text/game" src="js/game/combat.js"></script>
 <script type="text/game" src="js/game/dungeon.js"></script>
 <script type="text/game" src="js/game/hub.js"></script>
+<script type="text/game" src="js/game/world.js"></script>   <!-- paseo por el mundo, jugadores del servidor, monstruos -->
+<script type="text/game" src="js/game/ready.js"></script>   <!-- «¡Listo!» antes de cada combate -->
 <script type="text/game" src="js/main.js"></script>
 <script type="text/game" src="js/ui/common.js"></script>
 <script type="text/game" src="js/ui/inventory.js"></script>
@@ -194,8 +211,12 @@
 <script type="text/game" src="js/ui/market.js"></script>
 <script type="text/game" src="js/ui/sets.js"></script>
 <script type="text/game" src="js/ui/party.js"></script>
+<script type="text/game" src="js/ui/trade.js"></script>   <!-- intercambios de kamas y objetos -->
+<script type="text/game" src="js/ui/friends.js"></script>   <!-- ventana Amigos, avisos y menú del jugador -->
 <script type="text/game" src="js/ui/windows.js"></script>
 <script type="text/game" src="js/ui/coliseo.js"></script>   <!-- ⚔️ Coliseo: búsqueda de partida 1v1 · 2v2 · 3v3 (espera hasta completar los equipos) -->
+<script type="text/game" src="js/ui/worldmap.js"></script>   <!-- 🗺 botón «Mapas»: ventana con el mapa del mundo -->
+<script type="text/game" src="js/ui/gmenu.js"></script>   <!-- menú del servidor: salir del juego · cambiar de personaje · cambiar de servidor -->
 <script type="text/game" src="js/ui/layout.js"></script>   <!-- interfaz personalizable: mover / redimensionar / ocultar paneles -->
 <!-- arranque: versión → config de Firebase → login (auth.js) → al iniciar sesión boot.js carga los scripts type="text/game" de arriba -->
 <script src="js/version.js"></script>

@@ -1,0 +1,12 @@
+CARAS DE LAS CLASES (PNG que subes tú)
+
+Nombre del archivo:   <clase>_<m|f>_<n>.png
+   m = masculino, f = femenino, n = 1, 2, 3 … (hasta 8 caras por clase y sexo; LOOK.faceN en js/data/looks.js)
+   Ejemplos: feca_m_1.png  feca_m_2.png  feca_f_1.png  osamodas_m_1.png
+
+Clases: feca, osamodas, anutrof, sram, xelor, zurkarak, aniripsa, yopuka, ocra, sadida, sacrogrito, pandawa, tymador, zobal, steamer
+
+- Imagen cuadrada (ej. 256×256), con la cara centrada. Si no es cuadrada se recorta un cuadrado desde arriba.
+- En «Apariencia» (creador de personaje) solo aparecen las caras que existan; el jugador elige una.
+- Esa cara se ve en el carrusel, la cabecera, el personaje en turno, la lista de turnos, los resultados y el menú de jugador.
+- Si falta el PNG se muestra el icono de la clase.

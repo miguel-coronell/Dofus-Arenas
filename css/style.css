@@ -222,3 +222,6 @@ select,button,input{background:var(--dk3);border:1px solid var(--ln);color:var(-
 .rloot span.set{border-color:#e0b030;color:#ffe07a;font-weight:700;box-shadow:0 0 8px rgba(224,176,48,.4)}
 @media(max-width:700px){#retos{width:auto;max-width:calc(100% - 16px);left:8px;bottom:calc(var(--hud,110px) + 54px);flex-direction:row;flex-wrap:wrap;padding:4px 6px;gap:4px}.rt-h{display:none}.rt{grid-template-columns:auto auto;padding:2px 6px}.rt-t small,.rt-t em{display:none}.rt-s{font-size:11px}#sets .st-row{grid-template-columns:38px 1fr 34px 46px}.ss-p{grid-template-columns:38px 1fr auto}}
 .mk-src div small{display:inline}.rt-t{text-align:left}
+
+/* caras PNG en el creador de personaje */
+.opt img{width:56px;height:56px;object-fit:cover;object-position:top;border-radius:8px;background:#2b241b}.opt small{font-size:10px}

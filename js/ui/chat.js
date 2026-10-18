@@ -57,9 +57,9 @@ const Chat={
   if(ch==='oficios'){if(/fabric|oficio|receta|forj|sastre|joyer|zapat|alquim|craft/i.test(t)||Math.random()<.4)say(a.n,Math.random()<.5?'Eso se fabrica en 🔨 Oficios con recursos de monstruos':'Yo subo ese oficio, ¡ánimo!',1100+Math.random()*1400)}},
  /* ---------- salas reales (Firebase) ---------- */
  on:false,
- live(ch){return Chat.on&&Net.db&&Net.uid&&(ch==='general'||ch==='comercio'||ch==='oficios'||(ch==='combate'&&G.mode==='pvp'&&Net.mid))},
+ live(ch){return Chat.on&&Net.db&&Net.uid&&(ch==='general'||ch==='comercio'||ch==='oficios'||(ch==='combate'&&G.net&&Net.mid))},
  pub(ch,t){const o={u:Net.uid,n:PJ.name.slice(0,20),t,ts:Date.now()};try{(ch==='combate'?Net.db.ref('matches/'+Net.mid+'/chat'):Net.db.ref('chat/'+ch)).push(o)}catch(e){console.warn('chat',e)}},
- sub(ch,ref){ref.limitToLast(30).on('child_added',s=>{const o=s.val();if(!o||Chat.keys.has(s.key))return;Chat.keys.add(s.key);Chat.add(ch,o.n+': '+o.t,o.u===Net.uid?'me':'')})},
+ sub(ch,ref){ref.limitToLast(30).on('child_added',s=>{const o=s.val();if(!o||Chat.keys.has(s.key)||(typeof Soc!=='undefined'&&Soc.ign[o.u]))return;Chat.keys.add(s.key);Chat.add(ch,o.n+': '+o.t,o.u===Net.uid?'me':'')})},
  async attach(){if(!window.FIREBASE_CONFIG||Chat.on)return;if(!(await Net.init()))return;Chat.on=true;['general','comercio','oficios'].forEach(c=>Chat.sub(c,Net.db.ref('chat/'+c)));
   Chat.add('general','Conectado: General, Comercio y Oficios son salas reales con otros jugadores.','sys')},
  subMatch(mid){if(Chat.mref){Chat.mref.off();Chat.mref=null}Net.mid=mid;if(mid&&Chat.on){Chat.mref=Net.db.ref('matches/'+mid+'/chat');Chat.sub('combate',Chat.mref)}}

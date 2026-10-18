@@ -5,11 +5,14 @@
    · PUESTO DE VENTA: pones tus objetos a TU precio; compradores simulados los van comprando con el tiempo si el precio es competitivo (cobras con una tasa).
    El tiempo avanza con el reloj real (1 «tic» cada 10 min, hasta 1 día de golpe al volver) y +2 tics por cada combate que terminas.
    El estado del mercado se guarda en el navegador (localStorage 'coliseo.eco') y lo comparten todos tus personajes.
+   EQUIPO ÚNICO (js/game/instances.js): el mercado guarda EJEMPLARES concretos de cada pieza (o.p = lista de ids con sus valores). El precio de cada uno depende de lo bueno que salió (±25 %). La DEMANDA (o.d: sube con cada compra y con rachas al azar, baja sola)
+   decide cuántos ejemplares nuevos fabrica el sistema en cada tic: lo que más se compra tiene más existencias. Lo que vendes al mercado entra en sus existencias.
    Balance: todo en ECO (abajo). Mercado ENTRE JUGADORES reales: haría falta un servidor (Firebase) — aquí los compradores son simulados. */
 const ECO={tickMs:600000,maxCatch:144,bucket:48,                       // ms por tic · tics máximos que se recuperan de golpe · tics por «día» de eventos
  tax:.05,fee:.01,maxLots:12,hist:36,                                    // tasa de venta · tasa por poner un lote · lotes por personaje · puntos de historial
  target:{recurso:80,consumible:40,equipo:12},                           // stock «normal» de cada tipo de objeto
- slope:.45,pmin:.55,pmax:2.4,                                           // cuánto sube el precio al escasear (y límites)
+ slope:.45,pmin:.55,pmax:2.4,
+ pool:.4,poolMax:2.5,poolMake:3,                                          // equipo: cuánto crece el objetivo de existencias por punto de demanda · tope (× stock normal) · ejemplares nuevos por tic como máximo                                           // cuánto sube el precio al escasear (y límites)
  events:[
   {n:'🌾 Mala cosecha en la Raíz: recursos de la Raíz +45 %',f:i=>i.kind==='recurso'&&i.lvl<15,m:1.45},
   {n:'🔥 Fiebre de la Brasa: recursos de la Brasa +40 %',f:i=>i.kind==='recurso'&&i.lvl>=15&&i.lvl<40,m:1.4},
@@ -29,7 +32,7 @@ const Eco={s:null,
  initBuild(b){if(!b.mk||typeof b.mk!=='object'||Array.isArray(b.mk))b.mk={};if(!Array.isArray(b.mk.lots))b.mk.lots=[];b.mk.cash=Math.max(0,Math.floor(b.mk.cash)||0);b.mk.lots=b.mk.lots.filter(l=>l&&Registry.items[l.id]&&l.q>0&&l.p>=1);return b},
  /* ---- precios ---- */
  T(it){return ECO.target[it.kind==='recurso'?'recurso':it.kind==='consumible'?'consumible':'equipo']},
- st(id){const s=Eco.s||Eco.load(),it=Registry.items[id];return s.it[id]||(s.it[id]={st:Eco.T(it),h:[]})},
+ st(id){id=Inst.base(id);const s=Eco.s||Eco.load(),it=Registry.items[id];return s.it[id]||(s.it[id]={st:Eco.T(it),h:[]})},
  bucket(){return Math.floor((Eco.s||Eco.load()).n/ECO.bucket)},
  activeEvents(){const b=Eco.bucket();if(Eco._ev&&Eco._ev.b===b)return Eco._ev.v;const v=Eco._ae(b);Eco._ev={b,v};return v},
  _ae(b){const L=ECO.events,a=Math.floor(hh(b,3,1)*L.length),c=(a+1+Math.floor(hh(b,4,2)*(L.length-1)))%L.length;return[L[a],L[c]]},
@@ -37,21 +40,41 @@ const Eco={s:null,
  _dd(b){const L=Object.values(Registry.items).filter(i=>!i.nosale&&i.kind!=='recurso').sort((x,y)=>x.id<y.id?-1:1),o=[];
   for(let i=0;i<3&&L.length;i++){const it=L[Math.floor(hh(b,i+10,9)*L.length)];if(!o.includes(it.id))o.push(it.id)}return o},
  /* multiplicador por noticias y ofertas */
- mult(it){let m=1;for(const e of Eco.activeEvents())if(e.f(it))m*=e.m;if(Eco.deals().includes(it.id))m*=.8;return m},
+ mult(it){let m=1;for(const e of Eco.activeEvents())if(e.f(it))m*=e.m;if(Eco.deals().includes(it.base||it.id))m*=.8;return m},
  /* precio unitario de COMPRA con un stock dado */
- unit(id,stock){const it=Registry.items[id],f=clamp(Math.pow(Eco.T(it)/Math.max(1,stock),ECO.slope),ECO.pmin,ECO.pmax),nz=1+(hh(idh(id),Eco.s.n>>2,3)-.5)*.1;return Math.max(1,Math.round(it.price*f*Eco.mult(it)*nz))},
+ unit(id,stock){if(Inst.is(id)){const x=Registry.items[id];return Math.max(1,Math.round(Eco.unit(Inst.base(id),stock)*x.qf))}   // ejemplar: precio de la plantilla × calidad
+  const it=Registry.items[id],f=clamp(Math.pow(Eco.T(it)/Math.max(1,stock),ECO.slope),ECO.pmin,ECO.pmax),nz=1+(hh(idh(id),Eco.s.n>>2,3)-.5)*.1;return Math.max(1,Math.round(it.price*f*Eco.mult(it)*nz))},
  price(id){return Eco.unit(id,Eco.st(id).st)},
  sellUnit(id,stock){return Math.max(1,Math.floor(Eco.unit(id,stock)*PROG.sellPct))},
  sellPrice(id){return Eco.sellUnit(id,Eco.st(id).st)},
  /* coste total de comprar / venta total de q unidades (el precio se mueve unidad a unidad) */
  quote(id,q,mode){const st=Eco.st(id).st;let t=0;for(let i=0;i<q;i++)t+=mode==='buy'?Eco.unit(id,st-i):Eco.sellUnit(id,st+i);return t},
- trade(id,q,mode){const o=Eco.st(id);o.st=Math.max(0,o.st+(mode==='buy'?-q:q));Eco.save()},
+ trade(id,q,mode){const o=Eco.st(id);
+  if(Eco.gear(id)){const P=Eco.pool(Inst.base(id));   // equipo: sale/entra ESE ejemplar de las existencias; comprar sube la demanda, vender la baja
+   for(let i=0;i<q;i++){if(mode==='buy'){const j=P.indexOf(id);if(j>=0)P.splice(j,1)}else P.push(id)}
+   o.d=Math.max(0,(o.d||0)+(mode==='buy'?q:-.5*q));o.st=Math.max(1,P.length)}
+  else if(!Inst.is(id))o.st=Math.max(0,o.st+(mode==='buy'?-q:q));
+  Eco.save()},
+ /* ---- EQUIPO ÚNICO: existencias de ejemplares ---- */
+ gear(id){const t=Registry.items[Inst.base(id)];return!!t&&!t.nosale&&Inst.vary(t)},          // ¿el mercado vende esta pieza como ejemplares únicos?
+ goal(id,o){const T=Eco.T(Registry.items[id]);return clamp(Math.round(T*(1+ECO.pool*(o.d||0))),3,Math.round(T*ECO.poolMax))},   // existencias que el mercado quiere tener según la demanda
+ demand(id){const d=Eco.st(id).d||0;return d<.3?'baja':d<1.2?'normal':'alta'},
+ /* los ejemplares a la venta de una plantilla (los crea la primera vez que se miran) */
+ pool(id){id=Inst.base(id);const o=Eco.st(id);if(!Eco.gear(id))return[];
+  if(!Array.isArray(o.p)){o.p=[];const n=Math.max(3,Math.round(Eco.T(Registry.items[id])*(.7+.6*hh(idh(id),7,5))));for(let i=0;i<n;i++)o.p.push(Inst.roll(id));o.st=o.p.length;Eco._dirty=true}
+  else{const L=o.p.filter(x=>Registry.items[x]);if(L.length!==o.p.length){o.p=L;o.st=Math.max(1,L.length);Eco._dirty=true}}
+  return o.p},
+ pTick(id,o,n){o.d=(o.d||0)*.92+(hh(idh(id),n,11)<.1?.6:0);const P=o.p,g=Eco.goal(id,o);let mk=0;   // la demanda se enfría y a veces se dispara
+  while(P.length<g&&mk<ECO.poolMake){P.push(Inst.roll(id));mk++}                                    // falta stock → el sistema fabrica ejemplares nuevos
+  if(P.length>g+1&&Math.random()<.5)P.shift();                                                       // sobra → compradores simulados se llevan alguno
+  else if(P.length>2&&Math.random()<.12){P.shift();P.push(Inst.roll(id))}                           // rotación: se retira uno viejo y entra otro nuevo
+  o.st=Math.max(1,P.length)},
  hist(id){const h=Eco.st(id).h;return h.length?h:[Eco.price(id)]},
  trend(id){const h=Eco.hist(id),p=Eco.price(id),r=h[Math.max(0,h.length-7)]||p;return(p-r)/r},
  /* ---- el tiempo avanza ---- */
  tick(n,quiet){const s=Eco.s||Eco.load();for(let i=0;i<n;i++){s.n++;
   for(const id in Registry.items){const it=Registry.items[id];if(it.nosale&&!s.it[id])continue;const o=Eco.st(id),T=Eco.T(it);
-   o.st=Math.max(1,o.st+(T-o.st)*.05+(hh(idh(id),s.n,7)-.5)*T*.05);o.h.push(Eco.unit(id,o.st));if(o.h.length>ECO.hist)o.h.shift()}}
+   if(Array.isArray(o.p))Eco.pTick(id,o,s.n);else o.st=Math.max(1,o.st+(T-o.st)*.05+(hh(idh(id),s.n,7)-.5)*T*.05);o.h.push(Eco.unit(id,o.st));if(o.h.length>ECO.hist)o.h.shift()}}
   if(!quiet)Eco.save();else Eco.save()},
  /* ---- puesto de venta: compradores simulados ---- */
  sellChance(r){return clamp(.5*(1.6-r),0,.5)},                          // r = tu precio / precio de mercado
@@ -65,6 +88,6 @@ const Eco={s:null,
   if(b.mk.lots.length>=ECO.maxLots)return'Tu puesto está lleno ('+ECO.maxLots+' lotes)';const fee=Math.max(1,Math.ceil(p*q*ECO.fee));if(b.kamas<fee)return'No tienes para la tasa ('+fee+' kamas)';
   if(Items.worn(b,id)&&Items.own(b,id)-q<Items.worn(b,id)&&!Items.stack(id))return'Quítate primero el objeto que llevas puesto';
   Items.take(b,id,q);b.kamas-=fee;b.mk.lots.push({u:Date.now().toString(36)+Math.random().toString(36).slice(2,5),id,q,p,sold:0,n:Eco.s.n,gain:0});return null},
- cancel(b,u){const i=b.mk.lots.findIndex(l=>l.u===u);if(i<0)return'No existe';const l=b.mk.lots[i],r=l.q-l.sold;if(r>0&&Items.room(b,l.id)<r)return'No tienes sitio en el inventario';if(r>0)Items.give(b,l.id,r);b.mk.lots.splice(i,1);return null},
+ cancel(b,u){const i=b.mk.lots.findIndex(l=>l.u===u);if(i<0)return'No existe';const l=b.mk.lots[i],r=l.q-l.sold;if(r>0&&Items.room(b,l.id)<r)return'No tienes sitio en el inventario';if(r>0)Items.give(b,l.id,r,true);b.mk.lots.splice(i,1);return null},
  collect(b){const c=b.mk.cash;b.kamas+=c;b.mk.cash=0;return c}};
 Eco.load();

@@ -12,6 +12,7 @@ Modos (selector de arriba; la **arena y el clima salen solos**, no hay que elegi
 - **XP**: ganar o perder da XP según el nivel del rival (`PROG` en `js/game/rules.js`; ahí está TODO el balance).
 
 ## Tus PNG
+**Caras de las clases**: `assets/faces/<clase>_<m|f>_<n>.png` (n = 1…8). Se eligen en «Apariencia»; ver `assets/faces/_LEEME.txt`.
 `assets/characters/<clase>_<m|f>.png` (ej. `feca_m.png`, `feca_f.png`). Lista completa en `assets/characters/_LEEME.txt`. Fondo transparente, mirando a la DERECHA. Si falta un PNG se ve el icono de la clase. Monstruos y arenas funcionan como antes (`monstruos.js`, `js/data/arenas/`).
 
 ## Añadir / cambiar hechizos
@@ -45,8 +46,8 @@ Todo en `js/data/objects.js` (una línea por invocación/objeto + la tabla `OBM`
 
 ## Cuenta, carrusel y creador de personaje (parte 3)
 - **Cuenta** = los personajes guardados en este navegador (máx. `PROG.maxChars` = 5, clave `coliseo.chars`; el personaje único de versiones anteriores se migra solo). Al abrir: cuenta nueva → creador; si no → carrusel (← → / arrastrar / rueda / clic en la tarjeta central para jugar). Botones: Jugar · Apariencia (nombre, sexo, cara, peinado y colores; la clase no se cambia) · Borrar.
-- **Aspecto** (`js/data/looks.js`; se guarda en `build.look`, viaja en PvP y se sanea al recibirlo): 8 caras, 8 peinados, 8 pieles, 10 colores de pelo, 6 de ojos y 13 de atuendo. Para añadir uno nuevo, añade una entrada a su lista.
-- **Dónde se ve**: cara, peinado, piel, pelo y ojos en el RETRATO (carrusel, cabecera, creador, ventana de resultado). El color de atuendo pinta el retrato, el ANILLO bajo los pies en combate y recolorea las zonas azules/verdes/violetas del sprite (Osamodas, Sram…). Los PNG naranjas/marrones (Feca, Anutrof…) no se pueden recolorear sin máscaras: ahí solo cambia el anillo y el retrato. El recolor de píxeles necesita servidor/hosting; abriendo `index.html` con `file://` el navegador lo bloquea y solo se ven anillo y retrato.
+- **Aspecto** (`js/data/looks.js`; se guarda en `build.look` = `{f:cara, c:atuendo}`, viaja en PvP y se sanea al recibirlo): la **cara** es un PNG tuyo (`assets/faces/<clase>_<m|f>_<n>.png`) y el **atuendo** (13 colores) pinta el anillo bajo los pies y recolorea las zonas azules/verdes/violetas del sprite.
+- **Dónde se ve la cara**: carrusel, cabecera, creador, personaje en turno, lista de turnos y ventana de resultado. Los PNG naranjas/marrones (Feca, Anutrof…) no se pueden recolorear sin máscaras: ahí solo cambia el anillo. El recolor de píxeles necesita servidor/hosting; con `file://` el navegador lo bloquea.
 - Las cuentas en la nube ya están (ver «Cuentas, nube y PvP online»). Pendiente: recolor de piel/pelo en el sprite (haría falta una máscara por PNG).
 
 ## Kamas, equipo, inventario y mercadillo (parte 4)
@@ -112,3 +113,9 @@ Todo en `js/data/objects.js` (una línea por invocación/objeto + la tabla `OBM`
 - **⚔️ Coliseo con búsqueda de partida** (`js/ui/coliseo.js`, `js/net/net.js`): formatos **1 vs 1, 2 vs 2 y 3 vs 3**. Pulsas «Buscar partida» y **la búsqueda queda activa** hasta que haya **jugadores reales** para completar los dos equipos (2, 4 o 6): no se entra a ninguna sala ni se rellena con bots. Mientras esperas puedes seguir en la sala (aparece un contador flotante con «Ver» y «✕ cancelar»). Al completarse sale «¡Partida encontrada!» y a los 3 s empieza. Los equipos se reparten por nivel (0,1,1,0,0,1). Mientras buscas no puedes empezar otros combates ni mazmorras.
 - **PvP robusto**: si alguien abandona o se desconecta, su personaje cae y el resto sigue; si un jugador no responde, se le pasa el turno a los ~6 s de agotarse su reloj y a los 3 turnos seguidos se le expulsa por inactividad. El reloj del turno ya no se pausa en PvP al abrir ventanas.
 - ⚠️ **Hay que volver a pegar `firebase/database.rules.json`** en las reglas de Firebase (la cola ahora cuelga de `lobby/q/<formato>` y las partidas usan `matches/<id>/meta/uids`). Sin Firebase configurado, la ventana del Coliseo avisa de que no hay partidas.
+
+## Mundo, amigos e intercambios (v0.18)
+- **Mundo**: 4×4 mapas (`WORLD.M` en `js/data/arenas/mundo.js`: nombre, base de colores, zona y nivel de monstruos). Servidores en `WORLD.SRV`. Fondos: `assets/world/mapa_<col>_<fila>.png`.
+- **Social** (`js/net/social.js`, `js/ui/friends.js`, `js/ui/trade.js`): amigos/enemigos/DM/duelos/intercambios por Firebase (`soc`, `inbox`, `dm`, `online`, `trades`). Solo con cuenta real.
+- **Preparación** (`js/game/ready.js`): «¡Listo!» antes de cada combate; en PvP viaja como acción `rdy`.
+- Límite conocido: los intercambios y duelos se confían al cliente (sin Cloud Functions).

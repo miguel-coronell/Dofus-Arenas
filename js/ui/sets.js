@@ -3,7 +3,7 @@
    Lee todo de Registry.isets / Registry.items / Registry.monsters → crear un set nuevo (base.js) o un monstruo con drops (monstruos.js) NO obliga a tocar este archivo. */
 const SETW={sel:null,msg:''};
 const setLv=S=>Math.min(...Items.setParts(S.id).map(p=>p.lvl),999);
-function renderSets(){const b=PJ,list=Object.values(Registry.isets).sort((a,c)=>setLv(a)-setLv(c)||a.n.localeCompare(c.n));
+function renderSets(){Items.normSets();const b=PJ,list=Object.values(Registry.isets).sort((a,c)=>setLv(a)-setLv(c)||a.n.localeCompare(c.n));
  if(!Registry.isets[SETW.sel])SETW.sel=list[0]?list[0].id:null;
  const S=Registry.isets[SETW.sel],P=S?Items.setParts(S.id):[],kinds=Object.keys(Registry.kinds),
   have=p=>Items.own(b,p.id),worn=p=>Items.worn(b,p.id)>0,own=P.filter(p=>have(p)>0).length,eq=S?Items.setCount(b,S.id):0,
@@ -13,8 +13,9 @@ function renderSets(){const b=PJ,list=Object.values(Registry.isets).sort((a,c)=>
  let d='<div class="st-empty">No hay sets</div>';
  if(S){const parts=[...P].sort((x,y)=>kinds.indexOf(x.kind)-kinds.indexOf(y.kind));
   d=`<div class="st-hd"><span class="st-big" style="--c:${S.c}">🎽</span><div><b>${esc(S.n)}</b><small>Nivel ${setLv(S)} · 🎒 ${own}/${P.length} piezas · ✔ ${eq} equipadas</small></div></div>
-  <div class="st-info"><div class="ss-t">Bonos del set <small>(según piezas equipadas)</small></div>`
-  +Object.entries(S.b).map(([n,st])=>`<div class="ss-b ${+n===act?'on':eq>=+n?'':'no'}">${+n===act?'▶':'·'} <b>${n} piezas</b>: ${esc(stTxt(st))}</div>`).join('')
+  <div class="st-info"><div class="ss-t">Bonos del set <small>(se acumulan · solo piezas del mismo set)</small></div>
+  <div class="ss-b ${eq>=2?'on':'no'}">${eq>=2?'▶':'·'} <b>Afinidad</b>: +${Math.round(Items.setPct(eq)*100)} % a las estadísticas de tus piezas de este set <small>(+${Math.round(PROG.setPct*100)} % por cada pieza extra)</small></div>`
+  +Object.entries(S.b).map(([n,st])=>`<div class="ss-b ${eq>=+n?'on':'no'}">${eq>=+n?'✔':'·'} <b>${n} piezas</b>: ${esc(stTxt(st))}</div>`).join('')
   +`<button class="st-up" data-eqall="${S.id}" style="margin:6px 0 2px;width:100%" ${P.some(p=>have(p)>0&&!worn(p)&&b.lvl>=p.lvl)?'':'disabled'}>⚔ Equipar las piezas que tengo</button>
   <div class="ss-t">Piezas <small>(se fabrican en los oficios con recursos de monstruos)</small></div>`
   +parts.map(p=>{const n=have(p),w=worn(p),slot=Object.keys(b.eq).find(k=>b.eq[k]===p.id),rc=Registry.recipes[p.id],K=Registry.kinds[p.kind];

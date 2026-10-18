@@ -1,0 +1,72 @@
+/* ui6.css · botón Mapas (ventana del mapa del mundo) y menú del servidor (salir · cambiar personaje · cambiar servidor) */
+/* --- ventana del mapa del mundo --- */
+#worldmap{position:fixed;inset:0;z-index:12;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:10px;touch-action:auto}#worldmap[hidden]{display:none}
+#worldmap .st-x{display:none}#worldmap.max .st-win{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important}#worldmap.max{padding:0}
+.wmw{width:min(820px,100%);height:min(520px,100%)}
+.wmb{display:flex;gap:12px;padding:12px;overflow:auto;min-height:0;flex:1}
+.wmg{flex:1 1 58%;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:6px;min-width:0}
+.wmc{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:64px;padding:4px;border:2px solid #111;border-radius:8px;background:#3a3834;color:#e6e0d0;text-align:center;line-height:1.15}
+.wmc b{font-size:12px}.wmc small{font-size:10px;opacity:.85}.wmc em{position:absolute;right:3px;top:1px;font-style:normal;font-size:13px}
+.wmc.void{visibility:hidden}.wmc.b-pradera{background:#3d4a2c}.wmc.b-claro{background:#35502f}.wmc.b-playa{background:#5a5330}.wmc.b-volcan{background:#5a2f26}.wmc.b-ruinas{background:#4c4a52}.wmc.b-cielo{background:#2f4a66}.wmc.b-cueva{background:#2a2a30}.wmc.b-sala{background:#5a4a28}
+.wmc:hover{border-color:var(--g2,#9bd54a)}.wmc.here{box-shadow:0 0 0 2px #ffd84a inset}.wmc.sel{border-color:#ffd84a}
+.wmd{flex:1 1 42%;min-width:180px;background:#22211f;border:2px solid #111;border-radius:8px;padding:10px 12px;color:#e6e0d0;overflow:auto;user-select:text}
+.wmd h3{margin:0 0 4px;color:#ffd84a;font-size:17px}.wmd h3 em{display:block;font-size:12px;font-style:normal;color:#9bd54a;margin-top:2px}.wmd h4{margin:10px 0 4px;font-size:12px;color:#c9b98f;text-transform:uppercase;letter-spacing:.5px}
+.wms{font-size:12.5px;opacity:.9}.wmmm{display:flex;flex-wrap:wrap;gap:4px}.wmm{background:#33322e;border:1px solid #111;border-radius:6px;padding:2px 6px;font-size:12px}
+.wmn{margin:0;padding:0;list-style:none;font-size:13px}.wmn li{padding:2px 0}.wmn span{display:inline-block;min-width:52px;color:#c9b98f}.wmt{margin:10px 0 0;font-size:12px;opacity:.75}
+@media(max-width:700px){.wmw{height:100%}.wmb{flex-direction:column}.wmg{flex:none}.wmc{min-height:52px}.wmc b{font-size:10.5px}.wmd{flex:none}}
+/* --- menú del servidor --- */
+#gmenu{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:12px}#gmenu[hidden]{display:none}
+.lv.gm{width:min(400px,100%)}.lv.gm h3{color:#ffd84a}.gml{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.gmo{display:grid;grid-template-columns:34px 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center;text-align:left;padding:10px 12px;background:linear-gradient(#4a4843,#33322e);border:2px solid #111;border-radius:10px;color:#f1ecdf}
+.gmo span{grid-row:1/3;font-size:24px;text-align:center}.gmo b{font-size:14px}.gmo small{font-size:11.5px;opacity:.8}
+.gmo:hover:not(:disabled){border-color:var(--g2,#9bd54a)}.gmo.on{border-color:#ffd84a}.gmo.bad{border-color:#7a3a3a}.gmo.bad:hover{border-color:#ff7a6a}.gmo:disabled{opacity:.5}
+/* --- botón del servidor en la pantalla de elegir personaje --- */
+.pk-srv{position:absolute;top:5px;right:10px;z-index:2;display:flex;align-items:center;gap:6px;padding:5px 12px;font-weight:700;font-size:13px;background:linear-gradient(#4a4843,#33322e);border:2px solid #111;border-radius:8px;color:#f1ecdf}
+.pk-srv i{font-style:normal;opacity:.8}.pk-srv:hover{border-color:var(--g2,#9bd54a)}
+
+/* --- barra de hechizos: 2 filas × 8 columnas (se rellena por filas; si hubiera más de 16, se desplaza) --- */
+#bx{--sw:54px}
+#slots{display:grid;grid-template-columns:repeat(8,var(--sw));grid-auto-rows:var(--sw);gap:5px;justify-content:center;align-content:start;max-width:none;max-height:calc(var(--sw)*2 + 8px);overflow-y:auto;overflow-x:hidden;touch-action:pan-y}
+#slots .slot{width:var(--sw);height:var(--sw)}
+#slots .slot.lk{width:var(--sw);min-width:0;padding:0;font-size:11px;line-height:1.1;white-space:normal}
+#slots .empty{grid-column:1/-1;grid-row:1/3;display:flex;align-items:center;justify-content:center}
+@media(max-width:700px){#bx{--sw:38px}#slots{gap:3px;max-height:calc(var(--sw)*2 + 5px)}#slots .slot{font-size:18px}#slots .slot .pa,#slots .slot .nv,#slots .slot .cd{font-size:9px}#slots .slot .pa{padding:1px 4px}}
+
+/* --- paneles con ANCHO y ALTO libres (🧩 Interfaz): el contenido se recoloca, botones y letras conservan su tamaño en píxeles --- */
+.lay-box{box-sizing:border-box;max-width:none!important;max-height:none!important;overflow:auto;touch-action:pan-y}
+#nav{--nb:54px}@media(max-width:700px){#nav{--nb:46px}}
+#nav.lay-box{grid-template-columns:repeat(auto-fill,var(--nb))!important;justify-content:center;align-content:center}
+#nav.lay-box button:not(#navt){display:flex!important}#nav.lay-box #navt{display:none!important}
+#hud.lay-box{flex-wrap:wrap;justify-content:center;align-items:center;align-content:flex-start;gap:8px 12px;container-type:inline-size}
+#hud.lay-box #bx{flex:1 1 220px;min-width:var(--sw)}
+#hud.lay-box #slots{grid-template-columns:repeat(auto-fill,var(--sw));max-height:none;overflow:visible;justify-content:center}
+#tcard.lay-box:not([hidden]){display:flex;flex-direction:column}
+#tcard.lay-box .th{flex:none}#tcard.lay-box .tsc{flex:1 1 auto;min-height:0;max-height:none}
+#turns.lay-box{flex-flow:column wrap;align-content:flex-start}
+#retos.lay-box{overflow-x:hidden}
+#pty.lay-box{flex-flow:row wrap;justify-content:center;align-content:flex-start}
+#zoom.lay-box{flex-flow:column wrap;justify-content:center;align-content:center}
+body.hub #wmap.lay-box:not([hidden]){display:flex;flex-direction:column}
+#wmap.lay-box .wm-g{flex:1 1 auto;min-height:0;grid-auto-rows:1fr}#wmap.lay-box .wm-g i{height:auto;min-height:6px}
+#hud.lay-box #bx{align-items:stretch}#hud.lay-box #btabs{justify-content:center}
+#hud.lay-box #slots{width:100%;box-sizing:border-box}
+/* estrecho: vida y reloj arriba, los hechizos debajo a todo el ancho · ancho: vida | hechizos | reloj (como en el original) */
+#hud.lay-box #vit{order:1}#hud.lay-box #rt{order:2}#hud.lay-box #bx{order:3;flex:1 1 100%}
+@container (min-width:520px){#hud.lay-box #bx{order:2;flex:1 1 220px}#hud.lay-box #rt{order:3}}
+
+/* ===== OBJETOS ÚNICOS (mercadillo): ejemplares con valores propios ===== */
+#mkt .st-row.mk-g{grid-template-columns:44px 1fr 40px 118px}
+.mk-n{display:inline-block;margin-left:4px;padding:0 6px;border-radius:9px;background:#1e3a14;border:1px solid #6dbb3c;color:#cdea8f;font-size:11px;font-weight:800}.mk-n.no{background:#3a1c14;border-color:#a8542f;color:#ffb070}
+.st-row.sel .mk-n{background:#10240a;color:#cdea8f}
+.mk-rgh{font-size:11px;font-weight:800;color:#a9a392;text-transform:uppercase;letter-spacing:.03em;margin-top:2px}
+.st-fx small.rg,.dt-fx small.rg{font-size:10.5px;color:#8f8a7b;font-weight:400}.st-fx small.rg.mx,.dt-fx small.rg.mx{color:#ffd24a}.st-fx small.rg.mn,.dt-fx small.rg.mn{color:#ff9a7a}
+.mk-ex{margin-top:10px;border:1px solid #111;border-radius:8px;background:#1b1a18;overflow:hidden}
+.mk-exh{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;padding:6px 8px;background:#25241f;border-bottom:1px solid #111;font-size:12px;color:#fff}
+.mk-xsort{display:flex;gap:4px}.mk-xsort button{padding:2px 8px;font-size:11px;font-weight:700}.mk-xsort button.on{background:var(--g2);border-color:var(--g3);color:var(--gt)}
+.mk-xr{display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid #111}.mk-xr:nth-child(odd){background:#201f1c}
+.mk-xs{display:flex;flex-wrap:wrap;gap:4px}
+.rl{font-style:normal;font-size:11.5px;padding:1px 7px;border-radius:9px;background:#2c2b28;border:1px solid #3d3b36;color:#e6d9b8}.rl.mx{border-color:#c9a227;color:#ffd24a;background:#33290f}.rl.mn{border-color:#7a4a3a;color:#ffb070}.rl.fx{color:#bdb7a5}
+.mk-xq{font-size:11px;color:#a9dd55;font-weight:700;min-width:38px;text-align:right}.mk-xp{color:#ffd24a;font-size:12px;white-space:nowrap}
+.mk-xr .st-up{padding:4px 10px;font-size:12px;font-weight:800;border-radius:6px}
+.mk-x0{padding:14px 8px;font-size:12px}.mk-dm{padding:6px 8px;font-size:11px;color:#a9a392}.mk-dm b{color:#fff}
+@media(max-width:700px){#mkt .st-row.mk-g{grid-template-columns:38px 1fr 30px 92px}.mk-xr{grid-template-columns:1fr auto auto}.mk-xq{display:none}}

@@ -1,7 +1,7 @@
 /* ui/windows.js · barra de ventana tipo sistema operativo (— minimizar · ▢ maximizar · ✕ cerrar) para TODAS las ventanas del juego.
    Cada ventana se vuelve a dibujar entera al cambiar de pestaña, así que un observador le vuelve a poner la barra. Las minimizadas quedan como pestañas en la barra #dock (arriba a la izquierda). */
 const WIN={'#result':{p:'.rwin',t:'Resultado',i:'🏆'},'#inv':{p:'.dt-inv',t:'Inventario',i:'🎒'},'#jobs':{p:'.st-win',t:'Oficios',i:'🔨'},'#mkt':{p:'.st-win',t:'Supermercado',i:'🛒'},
- '#spells':{p:'.st-win',t:'Hechizos',i:'✨'},'#sheet':{p:'.panel',t:'Personaje',i:'📈'},'#sets':{p:'.st-win',t:'Sets',i:'🎽'},'#party':{p:'.st-win',t:'Equipo',i:'👥'},'#dung':{p:'.st-win',t:'Mazmorras',i:'🏰'},'#colo':{p:'.st-win',t:'Coliseo',i:'⚔️'}};
+ '#spells':{p:'.st-win',t:'Hechizos',i:'✨'},'#sheet':{p:'.panel',t:'Personaje',i:'📈'},'#sets':{p:'.st-win',t:'Sets',i:'🎽'},'#party':{p:'.st-win',t:'Equipo',i:'👥'},'#dung':{p:'.st-win',t:'Mazmorras',i:'🏰'},'#colo':{p:'.st-win',t:'Coliseo',i:'⚔️'},'#friends':{p:'.st-win',t:'Amigos',i:'🤝'},'#worldmap':{p:'.st-win',t:'Mapas',i:'🗺'}};
 const Win={
  unpause(){if(!overlayOpen())G.paused=false},
  close(id){const el=$(id);el.hidden=true;Win.chip(id,false);el.classList.remove('max');

@@ -1,0 +1,11 @@
+FONDOS DE LOS MAPAS DEL MUNDO (4×4 = 16 imágenes)
+Guarda aquí un PNG (o JPG renombrado a .png) por mapa, con este nombre:  mapa_<columna>_<fila>.png   (columna y fila de 0 a 3)
+
+      col 0            col 1            col 2            col 3
+fila0 mapa_0_0.png     mapa_1_0.png     mapa_2_0.png     mapa_3_0.png    Bosque · Prado Norte · Colinas del Viento · Cumbre Celeste
+fila1 mapa_0_1.png     mapa_1_1.png     mapa_2_1.png     mapa_3_1.png    Prado Oeste · PLAZA CENTRAL · Ruinas · Falda del Volcán
+fila2 mapa_0_2.png     mapa_1_2.png     mapa_2_2.png     mapa_3_2.png    Costa · Claro Sur · Cruce · Campo de Brasas
+fila3 mapa_0_3.png     mapa_1_3.png     mapa_2_3.png     mapa_3_3.png    Bahía · Arrecife · Cueva · Cráter
+
+La imagen se estira para cubrir toda la pantalla (como las arenas). Las baldosas, obstáculos, salidas y personajes se dibujan encima.
+Si falta un PNG se ve un degradado de colores (el juego funciona igual). Nombres/monstruos/niveles de cada mapa: js/data/arenas/mundo.js (WORLD.M).

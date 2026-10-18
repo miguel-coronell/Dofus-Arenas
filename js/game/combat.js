@@ -17,8 +17,8 @@ const PLACEHOLDER={id:'_placeholder',n:'Monstruo ?',hp:80,spells:['mordisco']};
 
 /* o = {mode, me:build, foe?:build, seed?, weather?, a:{uid,build}, b:{uid,build}, uid}
    La ARENA y el CLIMA los elige el juego solo (main.js · begin). Las casillas de salida salen de las '1' y '2' del dibujo del mapa. */
-function startBattle(arenaId,o){G.bid++;G.arena=Registry.arenas[arenaId];G.over=false;G.fl=[];G.pr=[];G.sel=null;G.busy=false;G.mode=o.mode;G.q=Promise.resolve();G.dun=o.dun||null;G.allies=(o.allies||[]).length;G.left=false;G.gr=0;G.pvp=o.mode==='pvp'?{n:(o.players||[0,0]).length/2,mid:o.mid||null}:null;
- const seed=o.seed==null?Math.floor(Math.random()*2147483647):o.seed;Rules.init(G,seed);G.seed=seed;G.weather=o.weather||Maps.weather(G.arena,o.mode==='pvp'?seed:null);
+function startBattle(arenaId,o){G.bid++;G.arena=Registry.arenas[arenaId];G.over=false;G.fl=[];G.pr=[];G.sel=null;G.busy=false;G.mode=o.mode;G.q=Promise.resolve();G.dun=o.dun||null;G.net=o.mode==='pvp'||!!o.coop;G.coop=o.coop||null;G.allies=o.coop?(o.players||[]).length-1:(o.allies||[]).length;G.left=false;G.wk=null;G.duel=false;G.gr=0;G.pvp=o.mode==='pvp'?{n:(o.players||[0,0]).length/2,mid:o.mid||null}:null;
+ const seed=o.seed==null?Math.floor(Math.random()*2147483647):o.seed;Rules.init(G,seed);G.seed=seed;G.weather=o.weather||Maps.weather(G.arena,o.mode==='pvp'||o.coop?seed:null);
  G.bm=[];G.t0=Date.now();G.nt=0;G.mt=0;G.tl=0;G.tmax=0;G.res=null;G.round=0;G.noMobs=false;UI.result(null);Retos.start(o.mode);if(UI.logClear)UI.logClear();
  const A=G.arena,take=(list,n)=>{const l=list.slice(),r=[];while(r.length<n&&l.length)r.push(l.splice(G.r(0,l.length-1),1)[0]);return r},   // casillas de salida al azar (misma semilla = mismas casillas)
   s0=take(A.spawn[0],1)[0]||[1,1];
@@ -30,15 +30,20 @@ function startBattle(arenaId,o){G.bid++;G.arena=Registry.arenas[arenaId];G.over=
  else if(o.mode==='ai'){const L=o.me.lvl,cl=Object.keys(Registry.classes),foe=o.foe||PG.auto(cl[rn(0,cl.length-1)],clamp(L+rn(-2,2),1,PROG.maxLv),'Rival'),s1=take(A.spawn[1],1)[0];
   G.ents=[hero(o.me,0,0,s0,{ctl:'me'}),hero(foe,1,1,s1,{ctl:'ai'})];G.me=G.ents[0]}
  else{const L=o.me.lvl,all=Object.values(Registry.monsters).filter(m=>!m.dun),fa=all.filter(m=>!m.arenas||m.arenas.includes(arenaId)),fl=fa.filter(m=>!m.lv||(L>=m.lv[0]&&L<=m.lv[1])),pool=fl.length?fl:fa.length?fa:all;   // cada zona (lv:[min,max]) suelta SUS recursos
-  G.noMobs=!pool.length;G.ents=[hero(o.me,0,0,s0,{ctl:'me'})];G.me=G.ents[0];
+  G.noMobs=!pool.length;
+  if(o.coop){/* COOPERATIVO: o.players = jugadores reales del grupo (mismo orden en todos los clientes → mismas casillas); cada uno maneja el suyo y los monstruos los juega la IA en TODOS los clientes con la misma semilla */
+   G.ents=o.players.map((p,i)=>hero(p.build,i,0,(i===0?s0:take(A.spawn[0],1)[0])||[1,1],{uid:p.uid}));G.me=G.ents.find(e=>e.uid===o.uid);G.ents.forEach(e=>e.ctl=e===G.me?'me':'remote');
+   if(o.hps)G.ents.forEach(e=>{const h=+o.hps[e.uid];if(h>0)e.hp=Math.min(e.mhp,Math.round(h))})}        // mazmorra cooperativa: la vida pasa de sala en sala (la calcula el anfitrión)
+  else{G.ents=[hero(o.me,0,0,s0,{ctl:'me'})];G.me=G.ents[0]}
   const n=Math.min(A.spawn[1].length,(A.mobs||3)+(o.allies||[]).length),picks=o.foes||Array.from({length:n},()=>({m:pool.length?pool[rn(0,pool.length-1)]:PLACEHOLDER})),Ls=o.lvl||L;      // o.foes = lista fija (mazmorras) · si no, al azar de la zona
   take(A.spawn[1],picks.length).forEach(([x,y],i)=>{const{m,mult}=picks[i],hx=mult||1;     // monstruos escalan con tu nivel (los jefes llevan mult)
-   G.ents.push(mkEnt(i+1,m.n,1,x,y,{lvl:Ls,mhp:Math.round((m.hp+Ls*6)*hx),pa:hx>1?8:6,pm:3,pow:Object.fromEntries(ELS.map(e=>[e,Math.floor(Ls*2.5*(hx>1?1.25:1))])),res:hx>1?10:0,rel:m.resist||{},sp:m.spells.map(id=>({id,lv:Math.min(PROG.maxSpLv,1+Math.floor(Ls/35))}))},m,{ctl:'ai'}))})}
+   G.ents.push(mkEnt((o.coop?20:1)+i,m.n,1,x,y,{lvl:Ls,mhp:Math.round((m.hp+Ls*6)*hx),pa:hx>1?8:6,pm:3,pow:Object.fromEntries(ELS.map(e=>[e,Math.floor(Ls*2.5*(hx>1?1.25:1))])),res:hx>1?10:0,rel:m.resist||{},sp:m.spells.map(id=>({id,lv:Math.min(PROG.maxSpLv,1+Math.floor(Ls/35))}))},m,{ctl:'ai'}))})}
  /* EQUIPO: los aliados (o.allies = builds) combaten contigo con IA; en el duelo el rival trae el mismo número. Turnos alternados equipo 0 / equipo 1 */
  if(o.allies&&o.allies.length&&o.mode!=='pvp'){o.allies.forEach((b,i)=>{const sc=take(A.spawn[0],1)[0];if(sc)G.ents.push(hero(b,100+i,0,sc,{ctl:'ai',ally:true}))});
   if(o.mode==='ai'){const cl=Object.keys(Registry.classes);o.allies.forEach((b,i)=>{const sc=take(A.spawn[1],1)[0];if(sc)G.ents.push(hero(PG.auto(cl[rn(0,cl.length-1)],clamp(b.lvl+rn(-2,2),1,PROG.maxLv),'Rival '+(i+2)),200+i,1,sc,{ctl:'ai'}))})}
   const t0=G.ents.filter(e=>e.team===0),t1=G.ents.filter(e=>e.team===1);G.ents=[];for(let i=0;i<Math.max(t0.length,t1.length);i++){if(t0[i])G.ents.push(t0[i]);if(t1[i])G.ents.push(t1[i])}}
- G.turn=-1;UI.slots();next()}
+ if(o.coop){const t0=G.ents.filter(e=>e.team===0),t1=G.ents.filter(e=>e.team===1);G.ents=[];for(let i=0;i<Math.max(t0.length,t1.length);i++){if(t0[i])G.ents.push(t0[i]);if(t1[i])G.ents.push(t1[i])}}   // turnos alternados: jugador, monstruo, jugador…
+ G.turn=-1;UI.slots();Ready.begin(()=>next())}
 
 async function next(){if(G.over)return;const bid=G.bid;
  do{G.turn=(G.turn+1)%G.ents.length}while(G.ents[G.turn].hp<=0);
@@ -65,13 +70,15 @@ function finish(w){G.over=true;G.busy=false;G.tl=0;const me=G.me,mine=G.ents.fil
  if(me.spent&&Object.keys(me.spent).length)Items.spend(PJ,me.spent);                  // los consumibles gastados salen de tu inventario
  const row=e=>({n:e.n,lvl:e.lvl,ico:e.build?Registry.classes[e.build.cls].ico:e.ico||'👾',img:e.build?LOOK.url(e.build.look,e.build.sex,e.build.cls,72):null,hp:Math.ceil(e.hp),mhp:e.mhp,dd:Math.round(e.dd||0),dt:Math.round(e.dt||0),hl:Math.round(e.hl||0)});
  /* R = todo lo que enseña la ventana de resultado (main.js · UI.result). loot = botín (piezas de set y recursos) · chal = retos cumplidos */
- const R={left:!!G.left,draw:w===-1,won:w===me.team,mode:G.mode,dun:G.dun,allies:G.allies||0,dur:Math.round((Date.now()-G.t0)/1000),turns:G.mt,sides:[mine.map(row),foes.map(row)],loot:[]};
+ const R={duel:!!G.duel,left:!!G.left,draw:w===-1,won:w===me.team,mode:G.mode,dun:G.dun,coop:G.coop?{host:G.coop.host,me:me.uid,hn:(G.ents.find(e=>e.uid===G.coop.host)||{}).n||'el líder'}:null,allies:G.allies||0,dur:Math.round((Date.now()-G.t0)/1000),turns:G.mt,sides:[mine.map(row),foes.map(row)],loot:[],pl:G.ents.filter(e=>!e.sm&&e.uid&&e!==me&&e.build).map(e=>({uid:e.uid,n:e.n,c:e.build.cls,l:e.lvl,ally:e.team===me.team}))};
  if(G.dun&&(w!==me.team)&&typeof Dun!=='undefined')Dun.run=null;
  if(R.draw){G.res=R;if(SAVED)PG.save(PJ);UI.msg('Empate.');UI.hud();UI.result(R);return}
- const flv=G.mode==='pvp'&&foes.length>1?Math.round(foes.reduce((a,e)=>a+e.lvl,0)/foes.length):foe.lvl,ch=G.chal&&G.chal.length?Retos.eval(R.won):null,r=PG.result(PJ,R.won,flv,(ch?ch.xp:0)+.1*(G.allies||0),ch?ch.km:0),rw=R.won&&G.mode==='mob'?PG.reward(PJ,foes.map(e=>e.def),ch?ch.drop:1):{kamas:0,loot:[]};
+ const flv=G.mode==='pvp'&&foes.length>1?Math.round(foes.reduce((a,e)=>a+e.lvl,0)/foes.length):foe.lvl,duel=!!G.duel,ch=!duel&&G.chal&&G.chal.length?Retos.eval(R.won):null,r=duel?{xp:0,k:0,bx:0,bk:0,up:0,unl:[]}:PG.result(PJ,R.won,flv,(ch?ch.xp:0)+.1*(G.allies||0),ch?ch.km:0),rw=!duel&&R.won&&G.mode==='mob'?PG.reward(PJ,foes.map(e=>e.def),ch?ch.drop:1):{kamas:0,loot:[]};
  if(ch&&ch.rolls)Retos.loot(PJ,rw,ch.rolls);G.chalRes=ch;
  Object.assign(R,{kamas:r.k+rw.kamas,loot:rw.loot,xp:r.xp,up:r.up,cap:r.up*PROG.capPerLv,spp:r.up*PROG.spPerLv,lvl:PJ.lvl,xpNow:PJ.xp,xpNeed:PROG.xpNeed(PJ.lvl),max:PJ.lvl>=PROG.maxLv,unl:r.unl.map(id=>Registry.spells[id].n),
   chal:ch?ch.list:null,xpBonus:r.xp-r.bx,kamasBonus:r.k-r.bk});
+ if(G.coop&&G.dun&&R.won&&G.dun.room<G.dun.rooms-1&&G.coop.host!==me.uid&&typeof Soc!=='undefined'&&Soc.live())Soc.expect(m=>Party.goCoop(m,null),180000);      // mazmorra cooperativa: el anfitrión abre la siguiente sala y entras solo
+ if(G.wk&&R.won&&typeof World!=='undefined')World.dead[G.wk]=Date.now()+World.RESPAWN;
  R.sales=typeof Eco!=='undefined'?Eco.afterCombat(PJ):[];       // el mercado avanza: tus lotes a la venta pueden venderse
  if(SAVED)PG.save(PJ);G.res=R;UI.msg(R.won?'¡Victoria!':'Derrota.');UI.hud();UI.sheetRefresh();UI.result(R)}
 
@@ -85,7 +92,7 @@ async function exec(a){const e=G.cur,bid=G.bid;
  if(a.k==='quit')return dropPlayer(a.u,a.dc?'dc':'');
  if(a.k==='skip'){if(!e||G.over||e.hp<=0||e.sm||!e.uid||a.n!==G.nt)return;e.skips=(e.skips||0)+1;      // turno de un jugador que no responde: lo pasa quien lo vea primero (a.n evita duplicados)
   if(e.skips>=3)return dropPlayer(e.uid,'afk');if(UI.log)UI.log('⏱ '+e.n+' no respondió: turno pasado','foe');await next();return}
- if(!e||G.over||e.hp<=0)return;if(G.mode==='pvp'){if(a.u!==e.uid)return;e.skips=0}
+ if(!e||G.over||e.hp<=0)return;if(G.net&&e.uid){if(a.u!==e.uid)return;e.skips=0}
  if(a.k==='end'){await next();return}
  if(a.k==='mv'){const b=bfs(e.x,e.y,e.pm,e),d=b.d[a.x+','+a.y];if(!(d>0))return;
   let p=pathTo(b,a.x,a.y);const ti=p.findIndex(([x,y])=>G.objs.some(o=>o.kind==='trap'&&o.x===x&&o.y===y));if(ti>=0)p=p.slice(0,ti+1);   // una trampa detiene a quien la pisa
@@ -150,11 +157,11 @@ async function sai(m,bid){await wait(300);const dk=Registry.objs[m.dk]||{},mode=
 G.onSummon=(q,d)=>Object.assign(q,{def:{sprite:{src:'assets/objects/'+d.id+'.png'},ico:d.ico,scale:d.scale||.75},ico:d.ico,px:q.x,py:q.y,path:[],face:q.team?-1:1,atk:0,hurt:0,cast:0,seed:Math.random()*6});
 
 /* reloj del turno: corre mientras el jugador puede actuar (no durante animaciones). Al llegar a 0 el turno pasa solo; en PvP lo envía el cliente de quien juega */
-function tick(dt){if(G.over||!G.tmax||!G.cur||G.busy||(G.mode!=='pvp'&&(G.paused||(typeof overlayOpen==='function'&&overlayOpen()))))return;G.tl=Math.max(0,G.tl-dt);   // en PvP el reloj NO se pausa (los demás no pueden esperar)
- if(G.mode==='pvp'&&G.tl<=0&&G.cur!==G.me&&G.me&&G.me.uid){G.gr+=dt;if(G.gr>6&&!G.tskip){G.tskip=true;Net.send({k:'skip',u:G.me.uid,n:G.nt})}}
+function tick(dt){if(G.over||!G.tmax||!G.cur||G.busy||(!G.net&&(G.paused||(typeof overlayOpen==='function'&&overlayOpen()))))return;G.tl=Math.max(0,G.tl-dt);   // en PvP el reloj NO se pausa (los demás no pueden esperar)
+ if(G.net&&G.tl<=0&&G.cur!==G.me&&G.me&&G.me.uid){G.gr+=dt;if(G.gr>6&&!G.tskip){G.tskip=true;Net.send({k:'skip',u:G.me.uid,n:G.nt})}}
  if(G.tl<=0&&!G.tfire&&G.cur===G.me){G.tfire=true;UI.msg('⏱ ¡Tiempo agotado! Turno pasado automáticamente.');act({k:'end'})}}
 /* acciones del jugador local (en PvP viajan por la red y se ejecutan cuando vuelven, en el mismo orden para los dos) */
-function act(a){if(G.over||G.busy||G.cur!==G.me)return;if(G.mode==='pvp')Net.send({...a,u:G.me.uid});else G.q=G.q.then(()=>exec(a))}
+function act(a){if(G.over||G.busy||G.cur!==G.me)return;if(G.net)Net.send({...a,u:G.me.uid});else G.q=G.q.then(()=>exec(a))}
 function pick(i){const p=G.me;if(G.over||G.busy||G.cur!==p||!p.sp[i])return;const sp=Registry.spells[p.sp[i].id],err=Rules.ready(p,sp);
  if(err){UI.msg(err);return}if(sp.tg==='s'){act({k:'ct',s:i,x:p.x,y:p.y});return}G.sel=G.sel===i?null:i;UI.hud()}
 function click(x,y){if(G.hub)return Hub.click(x,y);const p=G.me;if(G.over||G.busy||G.cur!==p||p.path.length||!Rules.kind(G,x,y))return;
@@ -168,14 +175,14 @@ function endTurn(){if(G.over&&G.res){UI.result(G.res);return}if(!G.over&&G.cur==
    · PvP (1v1 · 2v2 · 3v3): cuenta como derrota; tu equipo sigue sin ti (en 1v1 gana el rival).
    leaveInfo() = texto del aviso · forfeit() = ejecutarlo */
 function leaveInfo(){const m=G.mode,tm=Party.builds().map(b=>b.name),dead=G.me&&G.me.hp<=0;
- if(m==='pvp'){const mates=G.ents.filter(e=>!e.sm&&e.team===G.me.team&&e!==G.me&&e.hp>0).length;
+ if(G.net){const mates=G.ents.filter(e=>!e.sm&&e.team===G.me.team&&e!==G.me&&e.hp>0).length;
   if(dead)return{t:'Ya estás fuera del combate',d:'Puedes marcharte sin penalización, pero no recibirás recompensa aunque tu equipo gane.',b:'Marcharme'};
-  return{t:'¿Abandonar el combate?',d:'Cuenta como <b>derrota</b> (XP reducida, sin kamas extra). '+(mates?'Tu equipo <b>seguirá luchando sin ti</b>.':'Tu rival gana la partida.'),b:'Abandonar'}}
+  return{t:'¿Abandonar el combate?',d:'Cuenta como <b>derrota</b> (XP reducida, sin kamas extra). '+(mates?'Tu equipo <b>seguirá luchando sin ti</b>.':(m==='mob'?'Los monstruos ganan.':'Tu rival gana la partida.')),b:'Abandonar'}}
  if(G.dun)return{t:'¿Salir de la mazmorra?',d:'Pierdes <b>todas las recompensas</b> que quedaban por conseguir (esta sala y las siguientes) y tendrás que empezarla de nuevo.'+(tm.length?' <b>'+tm.map(esc).join(', ')+'</b> '+(tm.length>1?'siguen':'sigue')+' sin ti.':''),b:'Salir y perder recompensas'};
  return{t:'¿Abandonar el combate?',d:'Cuenta como <b>derrota</b>: recibes la XP de perder y <b>ningún botín</b>.',b:'Abandonar'}}
 async function forfeit(){if(G.hub||G.over||!G.me)return;const me=G.me;G.left=true;
- if(G.mode==='pvp'){const dead=me.hp<=0;if(!dead){const foes=G.ents.filter(e=>!e.sm&&e.team!==me.team),fl=Math.round(foes.reduce((a,e)=>a+e.lvl,0)/Math.max(1,foes.length)),r=PG.result(PJ,false,fl,0,0);if(SAVED)PG.save(PJ);
-   Net.send({k:'quit',u:me.uid});Chat.add('combate','🚪 Abandonaste el combate · derrota (+'+r.xp+' XP, +'+r.k+' kamas)','sys')}
+ if(G.net){const dead=me.hp<=0;if(!dead){const foes=G.ents.filter(e=>!e.sm&&e.team!==me.team),fl=Math.round(foes.reduce((a,e)=>a+e.lvl,0)/Math.max(1,foes.length)),r=G.duel?{xp:0,k:0}:PG.result(PJ,false,fl,0,0);if(SAVED)PG.save(PJ);
+   Net.send({k:'quit',u:me.uid});Chat.add('combate',G.duel?'🚪 Abandonaste el duelo (los duelos no dan XP ni kamas)':'🚪 Abandonaste el combate · derrota (+'+r.xp+' XP, +'+r.k+' kamas)','sys')}
   Net.leave();Hub.enter();UI.head();UI.msg(dead?'Saliste del combate.':'🚪 Abandonaste el combate: cuenta como derrota.');return}
  if(G.dun){const tm=Party.builds().map(b=>b.name);Dun.run=null;Hub.enter();UI.msg('🚪 Saliste de la mazmorra: pierdes las recompensas pendientes.');
   if(tm.length)Chat.add('equipo','Saliste de la mazmorra. '+tm.join(', ')+(tm.length>1?' continúan':' continúa')+' sin ti.','sys');return}
